@@ -1,0 +1,432 @@
+/* Dicho y Hecho v58 · responsive (arreglos de escritorio sobre v55). Se carga DESPUÉS de ajustes-visuales.css.
+   El editor visual solo escribe ajustes-visuales.css, así que este archivo no se pisa al exportar.
+   Celulares (hasta 599 px): queda IGUAL que v49 (se respeta lo del editor). Solo se usa alto real de pantalla (dvh).
+   Desde 600 px (tablet, compu, celu acostado): columna centrada y sin el zoom del celu.
+   Desde 900 px: las listas van en 2 columnas y Gestión usa todo el ancho. */
+
+/* 1 · todas las pantallas */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.sh {
+  max-height: 88vh;
+  max-height: 88dvh;
+}
+.zm {
+  max-height: 70vh;
+  max-height: 70dvh;
+}
+.mpw {
+  height: clamp(260px, 46vh, 480px);
+  height: clamp(260px, 46dvh, 480px);
+}
+
+/* 2 · pantallas muy angostas (plegables cerrados, 280-300 px) */
+@media (max-width: 300px) {
+  main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  header {
+    padding-left: 12px;
+  }
+  .btn {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .lnd {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .kg {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 4 · celu acostado (poca altura): hotbar y botón + más bajos, hojas y mapa más altos */
+@media (orientation: landscape) and (max-height: 500px) {
+  body {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  nav {
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  nav button,
+  nav button.on {
+    min-height: 44px;
+  }
+  #fab {
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    width: 48px;
+    height: 48px;
+  }
+  #toast {
+    bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+  .sh {
+    max-height: 94vh;
+    max-height: 94dvh;
+  }
+  .mpw {
+    height: clamp(200px, 62vh, 360px);
+    height: clamp(200px, 62dvh, 360px);
+  }
+}
+
+/* 5 · desde 600 px: tablet y compu (las reglas con !important usan html body para ganarle a ajustes-visuales.css y al editor, vengan en el orden que vengan).
+   v56: --cw = ancho de la columna de contenido. Header, menú lateral, botón + y avisos se calculan con esa misma medida, así todo queda alineado.
+   El padding del header nunca baja de 16px (antes, entre 600 y ~1300 px el cálculo daba negativo y el logo y la campana quedaban pegados al borde). */
+@media (min-width: 600px) {
+  body {
+    --cw: 680px;
+  }
+  html body #v {
+    zoom: 1 !important;
+  }
+  /* retoques del editor que apuntan a "el 3.er div, el 2.º hijo..." solo valen para el celu: acá se anulan para que no zoomeen cosas al azar */
+  html body #v > div:nth-of-type(3) > div:nth-of-type(2),
+  html body #v > div:nth-of-type(3) > div:nth-of-type(2) > button,
+  html body #v > div:nth-of-type(1) > p:nth-of-type(1),
+  html body #v > div:nth-of-type(5) > button:nth-of-type(2) > svg {
+    zoom: 1 !important;
+  }
+  main {
+    max-width: var(--cw);
+    padding-top: 20px;
+  }
+  html body main {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  header {
+    padding-left: max(16px, calc((100% - var(--cw)) / 2 + 16px), env(safe-area-inset-left));
+    padding-right: max(16px, calc((100% - var(--cw)) / 2 + 16px), env(safe-area-inset-right));
+  }
+  html body nav {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  #fab {
+    right: max(16px, calc((100% - var(--cw)) / 2 + 16px));
+  }
+  #md {
+    align-items: center;
+    padding: 16px;
+  }
+  .sh {
+    max-width: 540px;
+    border-radius: var(--r4);
+    padding-bottom: 20px;
+    max-height: 86vh;
+    max-height: 86dvh;
+  }
+  /* los chips de rubros se acomodan en varias filas (en tablet se cortaban contra el borde) */
+  main:not(.dk) .chp {
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* 6 · desde 900 px: listas en 2 columnas y Gestión a todo el ancho (los formularios quedan angostos) */
+@media (min-width: 900px) {
+  body:has(#fres, #dres, #gl, .kg) {
+    --cw: 1000px;
+  }
+  #fres,
+  #dres,
+  #gl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    align-items: start;
+  }
+  #fres > :not(.card),
+  #dres > :not(.card),
+  #gl > :not(.card) {
+    grid-column: 1/-1;
+  }
+  .kg {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+/* 7 · pantallas grandes: fondo de manchas proporcional */
+@media (min-width: 1200px) {
+  body::before {
+    width: 560px;
+    height: 560px;
+  }
+  body::after {
+    width: 520px;
+    height: 520px;
+  }
+}
+
+/* 8 · desde 900 px: la barra de abajo pasa a ser un menú lateral fijo, como en una app de compu.
+   v56: el menú se pega al borde izquierdo de la columna de contenido (antes quedaba clavado en el borde de la pantalla y en monitores grandes quedaba lejísimos). */
+@media (min-width: 900px) {
+  html body {
+    padding-left: 124px;
+    padding-bottom: 32px;
+  }
+  html body main {
+    padding-bottom: 48px;
+  }
+  html body nav#nav {
+    left: max(16px, calc((100% - 124px - var(--cw)) / 2 + 16px)) !important;
+    right: auto !important;
+    bottom: auto !important;
+    top: 84px;
+    transform: none !important;
+    width: 92px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 6px;
+    border-radius: 28px !important;
+    animation: none;
+  }
+  html body nav#nav button,
+  html body nav#nav button.on {
+    flex: none !important;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 2px;
+    font-size: 11px;
+    letter-spacing: -0.2px;
+  }
+  html body nav#nav button span,
+  html body nav#nav button.on span {
+    max-width: 100% !important;
+    opacity: 1 !important;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  html body nav#nav button:not(.on):hover {
+    background: rgba(120, 140, 190, 0.14);
+    color: var(--tx);
+  }
+  html body nav#nav .dot,
+  html body nav#nav button.on .dot {
+    left: auto;
+    right: 6px;
+    top: 4px;
+  }
+  #fab {
+    right: max(16px, calc((100% - 124px - var(--cw)) / 2 + 16px));
+    bottom: 28px;
+  }
+  #toast {
+    left: calc(50% + 62px);
+    bottom: 28px;
+  }
+}
+
+/* 9 · desde 900 px (v55): layout de compu de verdad.
+   · Inicio (sin cuenta): portada en 2 columnas y pasos en 3 columnas.
+   · Pedidos, Mis pedidos, Directorio y Locales: 2 paneles. Filtros fijos a la izquierda (app.js los arma en .dk-side) y resultados en grilla a la derecha (.dk-main).
+   v56: los 2 paneles solo se activan si de verdad existe el .dk-side. Si la clase .dk queda de la pantalla anterior (por ejemplo al pasar a Perfil mientras carga) ya no se rompe el diseño. */
+@media (min-width: 900px) {
+  body:has(#v > .lnd) {
+    --cw: 1100px;
+  }
+  body:has(#v.dk > .dk-side) {
+    --cw: 1240px;
+  }
+  /* inicio */
+  html body main#v:has(> .lnd) {
+    max-width: var(--cw);
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 16px 24px;
+    align-items: stretch;
+  }
+  #v:has(> .lnd) > .lnd {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    margin: 0;
+    padding: 56px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #v:has(> .lnd) > .lnd h1 {
+    font-size: 44px;
+    letter-spacing: -1.2px;
+  }
+  #v:has(> .lnd) > .lnd p {
+    font-size: 17px;
+  }
+  #v:has(> .lnd) > .lnd .btn {
+    width: 100%;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #v:has(> .lnd) > .trust {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 0;
+    align-content: stretch;
+  }
+  #v:has(> .lnd) > .trust > div {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    grid-template-rows: auto auto;
+    align-content: center;
+    justify-items: start;
+    text-align: left;
+    gap: 2px 16px;
+    padding: 18px 20px;
+  }
+  #v:has(> .lnd) > .trust .ic {
+    grid-row: 1 / span 2;
+    width: 48px;
+    height: 48px;
+    align-self: center;
+  }
+  #v:has(> .lnd) > .trust b {
+    font-size: 16px;
+    align-self: end;
+  }
+  #v:has(> .lnd) > .trust .s {
+    font-size: 14px;
+    align-self: start;
+  }
+  #v:has(> .lnd) > *:not(.lnd):not(.trust) {
+    grid-column: 1/-1;
+  }
+  #v:has(> .lnd) > .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #v:has(> .lnd) > .steps:has(.stp:only-child) {
+    grid-template-columns: 1fr;
+  }
+  #v:has(> .lnd) > .rg {
+    justify-content: center;
+  }
+
+  /* 2 paneles */
+  html body main#v.dk:has(> .dk-side) {
+    max-width: var(--cw);
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+  .dk-side {
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    padding: 2px 4px 20px 2px;
+  }
+  .dk-side .h1 {
+    font-size: 28px;
+  }
+  .dk-side .chp {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    overflow: visible;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .dk-side .chp button {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 14px;
+    min-height: 40px;
+  }
+  body[data-t='dir'] .dk-side .chp,
+  body[data-t='feed'] .dk-side .chp {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  body[data-t='dir'] .dk-side .chp button,
+  body[data-t='feed'] .dk-side .chp button {
+    width: auto;
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  .dk-side .sbar {
+    flex-wrap: wrap;
+  }
+  .dk-side .sbar select {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+  .dk-side .bsel {
+    flex-wrap: wrap;
+  }
+  .dk-side .bsel select {
+    flex: 1 1 100%;
+  }
+  .dk-side .fsel select {
+    width: 100%;
+  }
+  .dk-main {
+    min-width: 0;
+  }
+  .dk-main #fres,
+  .dk-main #dres,
+  .dk-main #gl {
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  }
+  .dk-main .cas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 0 16px;
+    align-items: start;
+    padding-left: 0;
+  }
+  .dk-main .cas::before,
+  .dk-main .cas .cw::before {
+    display: none;
+  }
+  body[data-t='loc'] .dk-main {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 0 16px;
+    align-items: start;
+  }
+  body[data-t='loc'] .dk-main > :not(article.card) {
+    grid-column: 1/-1;
+  }
+
+  /* v56: las tarjetas de una misma fila quedan del mismo alto y sus botones alineados abajo (antes cada una tenía su alto y la grilla se veía desprolija) */
+  .dk-main #fres,
+  .dk-main #dres,
+  .dk-main #gl,
+  body[data-t='loc'] .dk-main {
+    align-items: stretch;
+  }
+  .dk-main #fres > article.card,
+  .dk-main #dres > article.card,
+  .dk-main #gl > article.card,
+  body[data-t='loc'] .dk-main > article.card {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+  .dk-main #fres > article.card > :last-child,
+  .dk-main #dres > article.card > :last-child,
+  .dk-main #gl > article.card > :last-child,
+  body[data-t='loc'] .dk-main > article.card > :last-child {
+    margin-top: auto;
+  }
+}

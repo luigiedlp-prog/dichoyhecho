@@ -1,0 +1,47 @@
+CREATE TABLE IF NOT EXISTS usuarios(id INTEGER PRIMARY KEY AUTOINCREMENT,tipo TEXT NOT NULL,nombre TEXT NOT NULL,telefono TEXT UNIQUE NOT NULL,pin_hash TEXT NOT NULL,rec_hash TEXT NOT NULL,barrio TEXT DEFAULT '',rubros TEXT DEFAULT '[]',bio TEXT DEFAULT '',google_id TEXT,suspendido INTEGER DEFAULT 0,intentos INTEGER DEFAULT 0,bloqueado_hasta INTEGER DEFAULT 0,origen INTEGER DEFAULT 0,dni TEXT DEFAULT '',direccion TEXT DEFAULT '',mail TEXT DEFAULT '',alertas_hasta INTEGER DEFAULT 0,ref_cod TEXT DEFAULT '',ref_por INTEGER DEFAULT 0,ref_ok INTEGER DEFAULT 0,promos INTEGER DEFAULT 0,ref_prem INTEGER DEFAULT 0,reg_ip TEXT DEFAULT '',tel_ok INTEGER NOT NULL DEFAULT 1,pregunta TEXT NOT NULL DEFAULT '',resp_hash TEXT NOT NULL DEFAULT '',creado INTEGER);
+CREATE TABLE IF NOT EXISTS sesiones(token TEXT PRIMARY KEY,usuario_id INTEGER NOT NULL,vence INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS pedidos(id INTEGER PRIMARY KEY AUTOINCREMENT,cliente_id INTEGER NOT NULL,titulo TEXT NOT NULL,rubro TEXT NOT NULL,descripcion TEXT DEFAULT '',barrio TEXT DEFAULT '',presupuesto TEXT DEFAULT 'A convenir',estado TEXT DEFAULT 'abierta',vence INTEGER NOT NULL,creado INTEGER NOT NULL,elegida_en INTEGER,hecha_en INTEGER,oculta INTEGER DEFAULT 0,dest_desde INTEGER DEFAULT 0,dest_hasta INTEGER DEFAULT 0,aviso_en INTEGER DEFAULT 0,aviso_pend INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS postulaciones(id INTEGER PRIMARY KEY AUTOINCREMENT,pedido_id INTEGER NOT NULL,trabajador_id INTEGER NOT NULL,mensaje TEXT DEFAULT '',estado TEXT DEFAULT 'activa',creado INTEGER NOT NULL,oculta INTEGER DEFAULT 0,UNIQUE(pedido_id,trabajador_id));
+CREATE TABLE IF NOT EXISTS puntuaciones(id INTEGER PRIMARY KEY AUTOINCREMENT,pedido_id INTEGER UNIQUE NOT NULL,trabajador_id INTEGER NOT NULL,cliente_id INTEGER NOT NULL,estrellas INTEGER NOT NULL,comentario TEXT DEFAULT '',creado INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS denuncias(id INTEGER PRIMARY KEY AUTOINCREMENT,autor_id INTEGER NOT NULL,tipo TEXT NOT NULL,objetivo_id INTEGER NOT NULL,motivo TEXT DEFAULT '',estado TEXT DEFAULT 'abierta',creado INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS i_ch ON pedidos(estado,creado);
+CREATE INDEX IF NOT EXISTS i_po ON postulaciones(pedido_id,estado);
+CREATE TABLE IF NOT EXISTS pedido_fotos(id INTEGER PRIMARY KEY AUTOINCREMENT,pedido_id INTEGER NOT NULL,img TEXT NOT NULL,k TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS i_fo ON pedido_fotos(pedido_id);
+CREATE TABLE IF NOT EXISTS push_subs(endpoint TEXT PRIMARY KEY,usuario_id INTEGER NOT NULL,creado INTEGER NOT NULL,p256dh TEXT,auth TEXT);
+CREATE TABLE IF NOT EXISTS avisos(id INTEGER PRIMARY KEY AUTOINCREMENT,usuario_id INTEGER NOT NULL,texto TEXT NOT NULL,leido INTEGER DEFAULT 0,creado INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS i_av ON avisos(usuario_id,leido,id);
+CREATE TABLE IF NOT EXISTS perfil_fotos(usuario_id INTEGER PRIMARY KEY,img TEXT NOT NULL,actualizado INTEGER NOT NULL,k TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS limites(id INTEGER PRIMARY KEY AUTOINCREMENT,clave TEXT NOT NULL,creado INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS i_li ON limites(clave,creado);
+CREATE TABLE IF NOT EXISTS resena_fotos(id INTEGER PRIMARY KEY AUTOINCREMENT,puntuacion_id INTEGER NOT NULL,img TEXT NOT NULL,k TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS i_rf ON resena_fotos(puntuacion_id);
+CREATE TABLE IF NOT EXISTS trabajos_fotos(id INTEGER PRIMARY KEY AUTOINCREMENT,usuario_id INTEGER NOT NULL,img TEXT NOT NULL,creado INTEGER NOT NULL,k TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS i_tf ON trabajos_fotos(usuario_id);
+CREATE TABLE IF NOT EXISTS locales(id INTEGER PRIMARY KEY AUTOINCREMENT,nombre TEXT NOT NULL,rubro TEXT NOT NULL,direccion TEXT DEFAULT '',barrio TEXT DEFAULT '',telefono TEXT DEFAULT '',whatsapp INTEGER DEFAULT 0,horario TEXT DEFAULT '',descripcion TEXT DEFAULT '',activo INTEGER DEFAULT 1,codigo TEXT DEFAULT '',creado INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS errores(id INTEGER PRIMARY KEY AUTOINCREMENT,creado INTEGER NOT NULL,donde TEXT NOT NULL,mensaje TEXT DEFAULT '',detalle TEXT DEFAULT '',usuario_id INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS ajustes(clave TEXT PRIMARY KEY,valor TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS logs(id INTEGER PRIMARY KEY AUTOINCREMENT,creado INTEGER NOT NULL,tipo TEXT NOT NULL,detalle TEXT DEFAULT '');
+CREATE INDEX IF NOT EXISTS i_lg ON logs(creado);
+CREATE UNIQUE INDEX IF NOT EXISTS i_lc ON locales(codigo) WHERE codigo!='';
+CREATE TABLE IF NOT EXISTS origen_dias(local_id INTEGER NOT NULL,dia TEXT NOT NULL,visitas INTEGER DEFAULT 0,PRIMARY KEY(local_id,dia));
+CREATE INDEX IF NOT EXISTS i_pa ON pedidos(aviso_pend,estado);
+CREATE TABLE IF NOT EXISTS avisados(pedido_id INTEGER NOT NULL,usuario_id INTEGER NOT NULL,PRIMARY KEY(pedido_id,usuario_id));
+CREATE TABLE IF NOT EXISTS activaciones(id INTEGER PRIMARY KEY AUTOINCREMENT,usuario_id INTEGER NOT NULL,tipo TEXT NOT NULL,pedido_id INTEGER DEFAULT 0,precio INTEGER NOT NULL,estado TEXT DEFAULT 'pendiente',creado INTEGER NOT NULL,activada_en INTEGER DEFAULT 0,vence INTEGER DEFAULT 0);
+CREATE INDEX IF NOT EXISTS i_ac ON activaciones(estado,creado);
+CREATE TABLE IF NOT EXISTS invitaciones(pedido_id INTEGER NOT NULL,trabajador_id INTEGER NOT NULL,cliente_id INTEGER NOT NULL,creado INTEGER NOT NULL,PRIMARY KEY(pedido_id,trabajador_id));
+CREATE INDEX IF NOT EXISTS i_in ON invitaciones(trabajador_id);
+
+-- v34: índices
+CREATE INDEX IF NOT EXISTS i_pu ON puntuaciones(trabajador_id);
+CREATE INDEX IF NOT EXISTS i_pc ON pedidos(cliente_id);
+CREATE INDEX IF NOT EXISTS i_pd ON pedidos(dest_hasta);
+CREATE INDEX IF NOT EXISTS i_pt ON postulaciones(trabajador_id);
+CREATE INDEX IF NOT EXISTS i_au ON activaciones(usuario_id);
+
+-- v35: referidos (cada cuenta tiene su código; ref_por = quién la invitó; ref_ok = ya completó su perfil y cuenta; promos = promociones gratis ganadas)
+CREATE UNIQUE INDEX IF NOT EXISTS i_uc ON usuarios(ref_cod) WHERE ref_cod!='';
+CREATE INDEX IF NOT EXISTS i_ur ON usuarios(ref_por);
+
+-- v42: confirmación manual del teléfono. tel_ok=0 = cuenta nueva esperando que Gestión le mande el código por WhatsApp (las cuentas viejas quedan en 1).
+CREATE TABLE IF NOT EXISTS tel_codigos(usuario_id INTEGER PRIMARY KEY,codigo TEXT NOT NULL,vence INTEGER NOT NULL,intentos INTEGER NOT NULL DEFAULT 0,creado INTEGER NOT NULL);

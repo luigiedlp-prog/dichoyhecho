@@ -1,0 +1,4 @@
+Poppins (Indian Type Foundry), licencia SIL Open Font License 1.1: se puede usar, copiar y subir a un repo libremente.
+Archivos woff reducidos a letras latinas (español) para que pesen ~10 KB cada uno. Pesos: 400, 500 y 700 (el 600 y el 800 usan el 700).
+
+Righteous (Brian J. Bonislawsky / Astigmatic), licencia SIL OFL 1.1 (ver OFL-Righteous.txt): es la fuente del nombre de la marca. righteous.woff es el .ttf original reducido a letras latinas (~19 KB).

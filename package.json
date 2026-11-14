@@ -1,0 +1,14 @@
+{
+  "name": "dichoyhecho",
+  "private": true,
+  "description": "Dicho y Hecho: pedidos y trabajadores de Pergamino",
+  "scripts": {
+    "test": "node tools/probar-worker.mjs && python3 tools/probar-pantallas.py",
+    "test:worker": "node tools/probar-worker.mjs",
+    "test:pantallas": "python3 tools/probar-pantallas.py",
+    "prueba": "python3 tools/prueba/armar.py",
+    "editor": "python3 tools/editor/armar-editor.py",
+    "formato": "prettier --write \"src/**/*.js\" \"public/**/*.js\" \"public/*.css\" \"tools/**/*.{js,mjs}\"",
+    "formato:revisar": "prettier --check \"src/**/*.js\" \"public/**/*.js\" \"public/*.css\" \"tools/**/*.{js,mjs}\""
+  }
+}
