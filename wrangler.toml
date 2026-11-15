@@ -25,9 +25,3 @@ enabled = true
 invocation_logs = true
 persist = true
 # ...
-[observability.logs]
-enabled = true
-invocation_logs = true
-
-[observability.traces]
-enabled = false
