@@ -1,4 +1,4 @@
-name = "dichoyhecho"
+name = "dicho-y-hecho"
 main = "src/worker.js"
 compatibility_date = "2026-10-01"
 
@@ -8,8 +8,8 @@ binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "dichoyhecho"
-database_id = "PEGAR-ACA-EL-ID-DE-D1"
+database_name = "dicho-y-hecho-db"
+database_id = "e5ecfdff-65b5-4ead-9332-0be7da09d51c"
 
 # Secret requerido (panel de gestión): ADMIN_KEY
 
