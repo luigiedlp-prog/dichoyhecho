@@ -1,6 +1,7 @@
 name = "dicho-y-hecho"
 main = "src/worker.js"
 compatibility_date = "2026-10-01"
+workers_dev = true
 
 [assets]
 directory = "./public"
@@ -18,10 +19,3 @@ database_id = "e5ecfdff-65b5-4ead-9332-0be7da09d51c"
 crons = ["*/5 * * * *"]
 
 # Secrets de push: VAPID_PUBLIC y VAPID_PRIVATE (ver tools/generar-vapid.mjs)
-
-# ...
-[observability.logs]
-enabled = true
-invocation_logs = true
-persist = true
-# ...
