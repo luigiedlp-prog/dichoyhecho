@@ -275,7 +275,9 @@ body {
     grid-template-columns: 1fr;
     gap: 14px;
     margin: 0;
-    align-content: stretch;
+    /* v88: las tarjetas ya no se estiran a la altura de la portada; quedan de su alto y centradas */
+    grid-auto-rows: max-content;
+    align-content: center;
   }
   #v:has(> .lnd) > .trust > div {
     display: grid;
@@ -285,7 +287,7 @@ body {
     justify-items: start;
     text-align: left;
     gap: 2px 16px;
-    padding: 18px 20px;
+    padding: 20px 22px;
   }
   #v:has(> .lnd) > .trust .ic {
     grid-row: 1 / span 2;
