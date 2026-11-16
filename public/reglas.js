@@ -24,6 +24,7 @@
     'Informática',
     'Lavadero y estética vehicular',
     'Clases y cuidados',
+    'Publicidad y diseño',
     'Otros',
   ];
 

@@ -41,6 +41,7 @@
     'Informática',
     'Lavadero y estética vehicular',
     'Clases y cuidados',
+    'Publicidad y diseño',
     'Otros',
   ];
   const RLOC = [
@@ -83,6 +84,7 @@
       'Niñera para el fin de semana',
       'Pasear y cuidar un perro',
     ],
+    'Publicidad y diseño': ['Diseñar el logo de mi negocio', 'Flyers para redes sociales', 'Fotos de productos para la tienda'],
     Otros: ['Armar muebles', 'Cambiar cerradura', 'Colgar cuadros y estantes'],
   };
   let S;

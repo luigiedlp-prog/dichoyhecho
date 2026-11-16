@@ -157,6 +157,9 @@ const IC = {
   'Clases y cuidados': sv(
     '<path d=\"M12 20.5s-8-4.7-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.9-8 10.6-8 10.6z\"/>',
   ),
+  'Publicidad y diseño': sv(
+    '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  ),
   Otros: sv('<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/>'),
 };
 let MZ = { cnt: {}, sel: '', k: 1, cx: 0, cy: 0, mv: 0, ent: 0, glow: 0, shown: 0 };
