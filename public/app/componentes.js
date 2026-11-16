@@ -148,8 +148,11 @@ const IC = {
   'Techos y zinguería': sv(
     '<path d=\"M2.5 12L12 3.5 21.5 12\"/><path d=\"M5 10.5V20h14v-9.5\"/><path d=\"M9.5 20v-5h5v5\"/>',
   ),
-  'Informática y celulares': sv(
-    '<rect x=\"6\" y=\"2\" width=\"12\" height=\"20\" rx=\"2.5\"/><path d=\"M10.5 18h3\"/>',
+  Informática: sv(
+    '<rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20M9 15v4M15 15v4"/>',
+  ),
+  'Lavadero y estética vehicular': sv(
+    '<path d="M19 17h2a1 1 0 0 0 1-1v-3a2 2 0 0 0-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3A3 3 0 0 0 12 7H5a1.5 1.5 0 0 0-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4a1 1 0 0 0 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
   ),
   'Clases y cuidados': sv(
     '<path d=\"M12 20.5s-8-4.7-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.9-8 10.6-8 10.6z\"/>',
@@ -213,7 +216,7 @@ const ILU = {
 const empty = (e, t, p, b) => `<div class="em"><div>${e}</div><h3>${t}</h3><p class="s">${p}</p>${b || ''}</div>`;
 const RC = Object.fromEntries(
   [
-    'Albañilería','Pintura','Plomería','Electricidad','Jardinería','Herrería','Carpintería','Limpieza','Fletes y mudanzas','Gasista','Aire acondicionado y refrigeración','Cerrajería','Service de electrodomésticos','Techos y zinguería','Informática y celulares','Clases y cuidados','Otros',
+    'Albañilería','Pintura','Plomería','Electricidad','Jardinería','Herrería','Carpintería','Limpieza','Fletes y mudanzas','Gasista','Aire acondicionado y refrigeración','Cerrajería','Service de electrodomésticos','Techos y zinguería','Informática','Lavadero y estética vehicular','Clases y cuidados','Otros',
   ].map((r) => [r, '#14B8A6']),
 ); // rediseño: un solo acento (verde petróleo) para todos los rubros
 const rcs = () => 'background:rgba(20,184,166,.16);color:#14B8A6';

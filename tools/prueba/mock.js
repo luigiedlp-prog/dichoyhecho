@@ -38,7 +38,8 @@
     'Cerrajería',
     'Service de electrodomésticos',
     'Techos y zinguería',
-    'Informática y celulares',
+    'Informática',
+    'Lavadero y estética vehicular',
     'Clases y cuidados',
     'Otros',
   ];
@@ -71,10 +72,11 @@
       'Reparar microondas',
     ],
     'Techos y zinguería': ['Arreglar goteras en el techo', 'Colocar membrana', 'Cambiar canaletas'],
-    'Informática y celulares': [
-      'Cambiar pantalla de celular',
-      'Formatear una notebook',
-      'Configurar el wifi y la impresora',
+    Informática: ['Formatear una notebook', 'Configurar el wifi y la impresora', 'Armar una PC'],
+    'Lavadero y estética vehicular': [
+      'Lavado completo de camioneta',
+      'Pulido y encerado del auto',
+      'Limpieza de tapizados',
     ],
     'Clases y cuidados': [
       'Clases de matemática para secundaria',

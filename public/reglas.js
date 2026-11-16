@@ -21,7 +21,8 @@
     'Cerrajería',
     'Service de electrodomésticos',
     'Techos y zinguería',
-    'Informática y celulares',
+    'Informática',
+    'Lavadero y estética vehicular',
     'Clases y cuidados',
     'Otros',
   ];
