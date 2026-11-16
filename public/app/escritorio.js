@@ -34,7 +34,8 @@ function navPC() {
   return `<div class="sb-br"><img src="icon-192.png" width="60" height="60" alt=""><b class="wm" aria-label="Dicho y Hecho">Dicho y<span>Hecho</span></b></div>
   <div class="sb-ls">${it('ini', 'ini', 'Inicio', tab === 'ini')}${it('mis', 'mis', 'Mis pedidos', tab === 'mis')}${it('loc', 'loc', 'Locales', tab === 'loc')}${it('perfil', 'perfil', 'Perfil', tab === 'perfil')}${it('cfg', 'perfil', 'Configuración', false)}${it('ayu', 'ini', 'Ayuda', false)}</div>
   <div class="sb-gd"><i>${dsv('target')}</i><b>Alcanza tus objetivos</b><p>Con Dicho y Hecho es más fácil.</p><span class="sb-bt" role="button" tabindex="0" data-a="guiaver">Ver guía ${ARR}</span></div>
-  <div class="sb-us" role="button" tabindex="0" data-a="tab" data-t="perfil">${av(me.id, me.fv, me.nombre, 'sb-av')}<div><b>${nom}</b><span>Cliente • ${esc(me.barrio || 'Pergamino')}</span></div><i class="sb-on" aria-hidden="true"></i></div>`;
+  <div class="sb-us" role="button" tabindex="0" data-a="tab" data-t="perfil">${av(me.id, me.fv, me.nombre, 'sb-av')}<div><b>${nom}</b><span>Cliente • ${esc(me.barrio || 'Pergamino')}</span></div><i class="sb-on" aria-hidden="true"></i></div>
+  <div class="credit sb-cr"><a href="https://instagram.com/modus.grid" target="_blank" rel="noopener"><img src="modusgrid.webp" alt="Logo de modus.grid" width="34" height="34"><span>Sistema hecho por <b>@modus.grid</b></span></a></div>`;
 }
 
 // Barra superior: buscador (lleva al directorio con lo escrito, igual que el buscador del celu)

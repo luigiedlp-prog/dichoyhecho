@@ -49,3 +49,10 @@
 - `esc()` de la app también escapa la comilla simple.
 - Sin cambios (ya estaba bien): todo el SQL va con parámetros; sesión con token en `Authorization` (sin cookies, no hay CSRF); tokens guardados con hash; PIN y respuesta de seguridad con PBKDF2; límites de intentos en login, recuperar PIN, registro y clave de Gestión con comparación sin filtrar tiempo; el teléfono del otro solo se muestra al elegido; CSP sin scripts inline.
 
+# v87 · Crédito de Modus Grid
+
+- Pie "Sistema hecho por @modus.grid" con el logo y link a Instagram, igual al de Fausto Furlano (`public/modusgrid.webp`). Está en `index.html` (debajo de `<main>`, estilos `.credit` al final de `app.css`).
+- PC con menú lateral (1100 px o más): el crédito va abajo del menú (`navPC()` en `app/escritorio.js`, estilos `.sb-cr` en `escritorio.css`) y el pie de la página se esconde, porque el panel de Inicio no scrollea.
+- Arreglo: los links a términos y privacidad (`legal.html#...`) daban ERR_FAILED. Cloudflare redirige `/legal.html` a `/legal`, y el service worker devolvía esa respuesta redirigida desde la caché, cosa que el navegador no acepta en una navegación. Ahora `sw.js` rearma una copia limpia (`limpia()`).
+- `sw.js` en ct-v87 y con `modusgrid.webp` en el caché.
+

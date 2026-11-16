@@ -1,6 +1,6 @@
 // Dicho y Hecho: caché de la app para abrirla sin internet + avisos push.
 // La API (/api/...) nunca se guarda: lo que se ve sin conexión es la pantalla, no los datos.
-const V = 'ct-v86',
+const V = 'ct-v87',
   SHELL = [
     './',
     'app.css',
@@ -29,6 +29,7 @@ const V = 'ct-v86',
     'img/hero-iglesia.webp',
     'img/trabajador.webp',
     'icon-192.png',
+    'modusgrid.webp',
     'legal.html',
     'fonts/poppins-400.woff',
     'fonts/poppins-500.woff',
@@ -51,6 +52,9 @@ self.addEventListener('activate', (e) =>
       .then(() => self.clients.claim()),
   ),
 );
+// Cloudflare manda /legal.html a /legal con una redirección. Esa respuesta, guardada en la caché, trae la marca "redirected" y el navegador no la acepta para abrir una página (ERR_FAILED, por ejemplo en los links de términos y privacidad). Se rearma una copia limpia.
+const limpia = (x) =>
+  x && x.redirected ? new Response(x.body, { status: x.status, statusText: x.statusText, headers: x.headers }) : x;
 // Rápido y al día: se muestra al instante lo guardado y se actualiza en segundo plano.
 // Para publicar un cambio, subí el número de V (ct-v40, ct-v41...): el celu baja todo de nuevo y la app se recarga sola al pasarla a segundo plano.
 self.addEventListener('fetch', (e) => {
@@ -68,9 +72,11 @@ self.addEventListener('fetch', (e) => {
         .catch(() => null);
       if (m) {
         e.waitUntil(red);
-        return m;
+        return limpia(m);
       }
-      return (await red) || (r.mode === 'navigate' ? c.match('./') : Response.error());
+      const n = await red;
+      if (n) return limpia(n);
+      return r.mode === 'navigate' ? limpia(await c.match('./')) : Response.error();
     }),
   );
 });

@@ -5944,3 +5944,36 @@ html[data-tema='light'] .brand-lg p {
   color: var(--rd-tx);
   text-shadow: none;
 }
+
+/* ====== Crédito "Sistema hecho por @modus.grid" (v87) ======
+   Pie de toda la app, igual al de Fausto Furlano. Celu: sube para quedar justo debajo del contenido (main deja 150 px de aire para el menú).
+   PC con menú lateral (1100 px o más): el pie de la página se esconde y el crédito va abajo del menú lateral (ver escritorio.css). */
+.credit {
+  margin: 34px 0 4px;
+  text-align: center;
+}
+.credit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--rd-s, var(--s));
+  text-decoration: none;
+  font-size: 13.5px;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+.credit img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: block;
+}
+.credit b {
+  color: var(--rd-tx, var(--tx));
+  font-weight: 600;
+}
+@media (max-width: 599px) {
+  footer.credit {
+    margin-top: -116px;
+  }
+}
