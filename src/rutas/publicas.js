@@ -50,7 +50,7 @@ export default async function publicas(C) {
         now,
       ),
       trabajadores: await n(
-        "SELECT COUNT(*) n FROM usuarios u WHERE u.tipo='trabajador' AND u.suspendido=0 AND u.rubros!='[]' AND EXISTS(SELECT 1 FROM perfil_fotos WHERE usuario_id=u.id)",
+        "SELECT COUNT(*) n FROM usuarios u WHERE u.tipo='trabajador' AND u.suspendido=0",
       ),
       hechos: await n("SELECT COUNT(*) n FROM pedidos WHERE estado='hecha'"),
     };
@@ -67,7 +67,6 @@ export default async function publicas(C) {
       .toLowerCase()
       .slice(0, 100);
     if (ml && !MAILRE.test(ml)) return E('El mail no es válido');
-    if (!String(b.barrio || '').trim()) return E('Elegí tu barrio');
     if (!R.telValido(tel)) return E('Teléfono inválido');
     if (!PIN.test(b.pin || '')) return E('El PIN tiene 6 números');
     const pg = PREG(b.pregunta),
@@ -106,7 +105,7 @@ export default async function publicas(C) {
       ]);
     try {
       r = await q(
-        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado,rubros) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         b.tipo,
         NOM(b.nombre),
         tel,
@@ -121,6 +120,7 @@ export default async function publicas(C) {
         pg,
         await mk(rs),
         now,
+        b.tipo === 'trabajador' ? '["Otros"]' : '[]',
       ).run();
     } catch (e) {
       return E('Ese teléfono ya está registrado', 409);

@@ -371,11 +371,8 @@ const view = {
     );
   },
   async completar() {
-    const f = me.falta,
-      w = me.tipo === 'trabajador',
-      it = (ok, t, s) => `<div class="in"><b>${ok ? sv(X.chk) + ' ' : ''}${t}</b><p class="s">${s}</p></div>`;
     set(
-      `<h1 class="h1">Completá tu perfil</h1><p class="s">Para usar Dicho y Hecho hace falta que tu perfil tenga estos datos. Así todos saben con quién hablan y hay más confianza.</p><div class="card"><input id="pf" type="file" accept="image/*" hidden>${it(!f.includes('nombre'), 'Nombre y apellido', f.includes('nombre') ? 'Poné tu nombre y tu apellido.' : esc(me.nombre))}${it(!f.includes('foto'), 'Foto de perfil', 'Una foto tuya donde se te vea la cara.')}${f.includes('foto') ? '<button class="btn full" data-a="pfoto">Subir foto de perfil</button>' : ''}${it(!f.includes('barrio'), 'Barrio', f.includes('barrio') ? 'Elegí el barrio donde estás.' : esc(me.barrio))}${w ? it(!f.includes('rubros'), 'Rubros', 'Hasta 3 oficios en los que trabajás.') : ''}${f.some((x) => x !== 'foto') ? '<button class="btn full" data-a="edperfil">Completar mis datos</button>' : ''}${it(true, 'Teléfono', 'Ya lo tenemos: lo usaste para crear tu cuenta.')}</div><p class="lk"><a data-a="salirc">Cerrar sesión</a></p>`,
+      `<h1 class="h1">Completá tu perfil</h1><p class="s">Para usar Dicho y Hecho hace falta tu nombre y apellido. La foto, el barrio y los rubros son opcionales: los podés sumar cuando quieras desde Perfil.</p><div class="card"><div class="in"><b>Nombre y apellido</b><p class="s">Poné tu nombre y tu apellido.</p></div><button class="btn full" data-a="edperfil">Completar mis datos</button><div class="in"><b>${sv(X.chk)} Teléfono</b><p class="s">Ya lo tenemos: lo usaste para crear tu cuenta.</p></div></div><p class="lk"><a data-a="salirc">Cerrar sesión</a></p>`,
     );
   },
   async perfil() {

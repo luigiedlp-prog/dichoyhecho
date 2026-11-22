@@ -16,13 +16,10 @@ export async function autenticar(C) {
   if (telPend && !['yo', 'tel-codigo', 'tel-nuevo'].includes(p[0])) return E('Falta confirmar tu teléfono', 403);
   const cli = me.tipo === 'cliente',
     tra = !cli;
-  // Perfil obligatorio: foto, barrio y (trabajadores) al menos un rubro
+  // Perfil mínimo: solo el nombre y apellido. Foto, barrio y rubros son opcionales (sin foto se ve el avatar genérico; sin rubro queda "Otros").
   const falta = async (u = me) => {
     const f = [];
     if (!NOM(u.nombre)) f.push('nombre');
-    if (!(await q('SELECT 1 x FROM perfil_fotos WHERE usuario_id=?', u.id).first())) f.push('foto');
-    if (!String(u.barrio || '').trim()) f.push('barrio');
-    if (u.tipo === 'trabajador' && !JSON.parse(u.rubros || '[]').length) f.push('rubros');
     return f;
   };
   const pedirPerfil = async () => {

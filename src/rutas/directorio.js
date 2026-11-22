@@ -47,7 +47,7 @@ export default async function directorio(C) {
         nuevos: 'id DESC',
       }[sp.get('o')] || 'COALESCE(prom,0) DESC,n DESC,id DESC';
     const W =
-        "u.tipo='trabajador' AND u.suspendido=0 AND u.rubros!='[]' AND EXISTS(SELECT 1 FROM perfil_fotos WHERE usuario_id=u.id) AND (?='' OR EXISTS(SELECT 1 FROM json_each(u.rubros) WHERE value=?)) AND (?='' OR u.barrio=?) AND (?=0 OR (u.dni!='' AND u.direccion!='' AND u.mail!='')) AND (?='' OR lower(u.nombre) LIKE ? ESCAPE '\\')",
+        "u.tipo='trabajador' AND u.suspendido=0 AND (?='' OR EXISTS(SELECT 1 FROM json_each(u.rubros) WHERE value=?)) AND (?='' OR u.barrio=?) AND (?=0 OR (u.dni!='' AND u.direccion!='' AND u.mail!='')) AND (?='' OR lower(u.nombre) LIKE ? ESCAPE '\\')",
       WB = [r, r, ba, ba, vr, nm, lk];
     const tot = (
         await q(

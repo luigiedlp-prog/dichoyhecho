@@ -53,7 +53,7 @@ const pe = (n) => '$' + Number(n).toLocaleString('es-AR');
 const av = (id, v, n, c) =>
   v
     ? `<img class="${c}" src="/api/pfoto/${id}?v=${v}" alt="">`
-    : `<span class="${c}">${esc((n || '?')[0].toUpperCase())}</span>`;
+    : `<span class="${c}" role="img" aria-label="Sin foto"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:62%;height:62%;opacity:.92"><circle cx="12" cy="8.5" r="4.2"/><path d="M3.8 21.5c0-4.6 3.7-7.4 8.2-7.4s8.2 2.8 8.2 7.4z"/></svg></span>`;
 const fec = (t) => new Date(t).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 const fecD = (t) =>
   new Date(t - 3 * 36e5).toLocaleDateString('es-AR', { timeZone: 'UTC', day: 'numeric', month: 'long' }); // día en hora de Argentina

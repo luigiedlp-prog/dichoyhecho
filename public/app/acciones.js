@@ -13,10 +13,6 @@ const A = {
     if (me) home();
   },
   auth: (d) => {
-    if (d.m === 'reg') {
-      REG.paso = 1;
-      REG.dir = 'f';
-    }
     if (d.m === 'rec') REG.recup = { tl: '', q: '' };
     auth(d.m);
   },
@@ -24,9 +20,8 @@ const A = {
   rtipo: (d) => {
     REG.guardar();
     tipo = d.t;
-    REG.ir(2, 'f');
+    auth('reg');
   },
-  rnext: () => REG.siguiente(),
   ojo: () => {
     const i = $('#pn'),
       b = $('.pe');
@@ -38,7 +33,6 @@ const A = {
     b.innerHTML = sv(v ? OJO.off : OJO.on);
     i.focus();
   },
-  rback: () => REG.atras(),
   start: () => {
     if (!localStorage.getItem('guia' + me.id)) {
       GS = 0;
@@ -185,7 +179,12 @@ const A = {
   },
   async reg() {
     REG.guardar();
-    if (!okNom(REG.datos.n) || !REG.datos.bb) throw new Error('Faltan tus datos del paso anterior');
+    if (!okNom(REG.datos.n)) throw new Error('Poné tu nombre y tu apellido');
+    if (!REGLAS.telValido(REG.datos.tl)) throw new Error('Revisá el teléfono: poné el código de área y el número');
+    {
+      const e = REGLAS.errPin(REG.datos.pn);
+      if (e) throw new Error(e);
+    }
     if (!okMail(REG.datos.ml.trim())) throw new Error('El mail no es válido');
     if (!REG.datos.pq) throw new Error('Elegí una pregunta de seguridad');
     {
@@ -204,13 +203,6 @@ const A = {
       acepto: $('#ac').checked,
       origen: localStorage.getItem('o') || '',
       ref: localStorage.getItem('r') || '',
-    }).catch((e) => {
-      if (/tel[ée]fono|PIN/i.test(e.message)) {
-        REG.paso = 3;
-        REG.dir = 'b';
-        auth('reg');
-      }
-      throw e;
     });
     try {
       localStorage.removeItem('r');
@@ -597,13 +589,13 @@ const A = {
         val: me.mail || '',
         ph: 'Solo lo ve quien elegís o te elige',
       },
-      { id: 'bb', lb: 'Barrio', opts: [['', 'Elegí tu barrio'], ...bs.map((x) => [x, x])], val: me.barrio },
+      { id: 'bb', lb: 'Barrio (opcional)', opts: [['', 'Sin barrio'], ...bs.map((x) => [x, x])], val: me.barrio },
     ];
     if (w)
       f.push(
         {
           h:
-            '<label class="lb">Rubros en los que trabajás (hasta 3)</label><div class="chips">' +
+            '<label class="lb">Rubros en los que trabajás (hasta 3; si no elegís, queda Otros)</label><div class="chips">' +
             RUB.map(
               (x) =>
                 `<label><input type="checkbox" class="rb" value="${x}" ${r.includes(x) ? 'checked' : ''}>${IC[x]} ${x}</label>`,
@@ -628,13 +620,9 @@ const A = {
           ? 'Poné tu nombre y apellido.'
           : !okMail(String(x.ml || '').trim())
             ? 'El mail no es válido.'
-            : !x.bb
-              ? 'Elegí tu barrio.'
-              : w && !x.rb.length
-                ? 'Elegí al menos un rubro.'
-                : w && x.rb.length > 3
-                  ? 'Elegí hasta 3 rubros.'
-                  : '',
+            : w && x.rb.length > 3
+              ? 'Elegí hasta 3 rubros.'
+              : '',
       on: (m) => {
         const l = () => {
           const n = m.querySelectorAll('.rb:checked').length;
@@ -870,7 +858,7 @@ document.addEventListener(
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && e.target.closest('#rst')) {
     e.preventDefault();
-    const b = $('#rst [data-a=rnext],#rst [data-a=reg],#rst [data-a=login],#rst [data-a=rec],#rst [data-a=recq]');
+    const b = $('#rst [data-a=reg],#rst [data-a=login],#rst [data-a=rec],#rst [data-a=recq]');
     if (b) b.click();
   }
 });

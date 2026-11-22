@@ -165,9 +165,7 @@ export default async function cuenta(C) {
   if (p[0] === 'perfil' && m === 'POST') {
     const r0 = [...new Set((Array.isArray(b.rubros) ? b.rubros : []).filter((x) => RUBROS.includes(x)))];
     if (r0.length > MAXR) return E('Elegí hasta ' + MAXR + ' rubros');
-    if (!String(b.barrio || '').trim()) return E('Elegí tu barrio');
-    if (tra && !r0.length) return E('Elegí al menos un rubro');
-    const r = JSON.stringify(r0);
+    const r = JSON.stringify(tra && !r0.length ? ['Otros'] : r0); // sin rubro elegido, el trabajador queda en "Otros"
     const nm = NOM(b.nombre || me.nombre);
     if (!nm) return E('Poné tu nombre y apellido');
     const ml =
