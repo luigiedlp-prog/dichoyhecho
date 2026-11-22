@@ -6034,3 +6034,39 @@ html[data-tema='dark'] .pio {
   width: 40px;
   height: 40px;
 }
+
+/* Contador de lugares Pionero (portada y registro) */
+.pzc {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  text-align: left;
+  color: #be123c;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.38);
+}
+.pzc.on {
+  display: flex;
+}
+.pzc > svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.pzc > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pzc .s {
+  color: inherit;
+  opacity: 0.85;
+}
+html[data-tema='dark'] .pzc {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.14);
+  border-color: rgba(251, 113, 133, 0.36);
+}

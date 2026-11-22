@@ -122,6 +122,9 @@ ok(pio(r && db.prepare("SELECT id FROM usuarios WHERE telefono='2477000050'").ge
 r = await reg('Cuenta Cincuenta Y Uno', '2477000051');
 ok(pio(db.prepare("SELECT id FROM usuarios WHERE telefono='2477000051'").get().id) === 0 && total() === 50, 'la cuenta 51 NO es Pionero');
 
+r = await call('zona');
+ok(r.s === 200 && r.d.pioneros === 0, 'zona informa 0 lugares Pionero cuando se llenaron: ' + (r.d && r.d.pioneros));
+
 // 3b) si una cuenta Pionero se elimina, libera su lugar y pasa a la siguiente
 const t50 = (await reg('Cuenta Cincuenta Dos', '2477000052')).d.token; // la 52: sin insignia (hay 50)
 const id52 = db.prepare("SELECT id FROM usuarios WHERE telefono='2477000052'").get().id;
@@ -130,6 +133,8 @@ const id50 = db.prepare("SELECT id FROM usuarios WHERE telefono='2477000050'").g
 const tk50 = (await call('login', { telefono: '2477000050', pin: '123456' })).d.token;
 r = await call('cuenta-borrar', { pin: '123456' }, tk50);
 ok(r.s === 200 && pio(id50) === 0 && total() === 49, 'al eliminar una cuenta Pionero se libera el lugar: ' + total());
+r = await call('zona');
+ok(r.d.pioneros === 1, 'zona informa 1 lugar libre tras eliminar una cuenta: ' + r.d.pioneros);
 r = await reg('Cuenta Cincuenta Tres', '2477000053');
 ok(pio(db.prepare("SELECT id FROM usuarios WHERE telefono='2477000053'").get().id) === 1 && total() === 50, 'la siguiente en registrarse toma el lugar');
 

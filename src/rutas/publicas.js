@@ -54,6 +54,8 @@ export default async function publicas(C) {
         "SELECT COUNT(*) n FROM usuarios u WHERE u.tipo='trabajador' AND u.suspendido=0",
       ),
       hechos: await n("SELECT COUNT(*) n FROM pedidos WHERE estado='hecha'"),
+      // lugares Pionero que quedan (0 cuando se llenaron)
+      pioneros: Math.max(0, PIONEROS - (await n('SELECT COUNT(*) n FROM usuarios WHERE pionero=1'))),
     };
     return new Response(JSON.stringify(z), {
       headers: { 'content-type': 'application/json', 'cache-control': 'public,max-age=60' },
