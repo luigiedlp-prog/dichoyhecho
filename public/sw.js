@@ -1,6 +1,6 @@
 // Dicho y Hecho: caché de la app para abrirla sin internet + avisos push.
 // La API (/api/...) nunca se guarda: lo que se ve sin conexión es la pantalla, no los datos.
-const V = 'ct-v94',
+const V = 'ct-v95',
   SHELL = [
     './',
     'app.css',

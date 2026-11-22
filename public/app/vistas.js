@@ -43,7 +43,7 @@ const view = {
     const star0 = sv('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>');
     set(
       ios() +
-        heroMarca() +
+        (PCW.matches ? '' : heroMarca()) +
         (R0.length
           ? ''
           : '<div class="card"><b>Elegí tus rubros</b><p class="s">Así te mostramos primero los pedidos de lo tuyo y te avisamos cuando salga uno.</p><button class="btn" data-a="edperfil">Elegir mis rubros</button></div>') +

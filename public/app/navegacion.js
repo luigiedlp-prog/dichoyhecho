@@ -43,12 +43,20 @@ const tabs = () =>
           ['loc', 'Locales', 'shop'],
           ['perfil', 'Perfil', 'user'],
         ]
-    : [
-        ['feed', 'Pedidos', 'home'],
-        ['mp', 'Propuestas', 'list'],
-        ['loc', 'Locales', 'shop'],
-        ['perfil', 'Perfil', 'user'],
-      ];
+    : PCW.matches
+      ? [
+          ['ini', 'Inicio', 'home'],
+          ['feed', 'Pedidos', 'home'],
+          ['mp', 'Propuestas', 'list'],
+          ['loc', 'Locales', 'shop'],
+          ['perfil', 'Perfil', 'user'],
+        ]
+      : [
+          ['feed', 'Pedidos', 'home'],
+          ['mp', 'Propuestas', 'list'],
+          ['loc', 'Locales', 'shop'],
+          ['perfil', 'Perfil', 'user'],
+        ];
 const SV = {
   home: 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
@@ -82,7 +90,7 @@ function nav() {
     btn = (x) =>
       `<button class="${x[0] === tab || (x[0] === 'perfil' && tab === 'pfotos') ? 'on' : ''}" data-a="tab" data-t="${x[0]}" aria-label="${x[1]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${SV[x[2]]}"/></svg><span>${x[1]}</span></button>`,
     pub = `<button class="pubb${tab === 'pub' ? ' on' : ''}" data-a="tab" data-t="pub" aria-label="Publicar un pedido"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i><span>Publicar</span></button>`;
-  const pc = cli && PCW.matches; // PC: menú lateral del escritorio (app/escritorio.js)
+  const pc = PCW.matches; // PC (cliente y trabajador): menú lateral del escritorio (app/escritorio.js)
   document.body.classList.toggle('shell', pc);
   shellBar(pc);
   $('#nav').innerHTML = pc ? navPC() : (cli ? [...t.slice(0, 2).map(btn), pub, ...t.slice(2).map(btn)] : t.map(btn)).join('');
@@ -90,7 +98,7 @@ function nav() {
   b.hidden = false;
   b.className = tab === 'nov' ? 'on' : '';
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${SV.bell}"/></svg>${me.av ? `<i class="dot">${me.av > 9 ? '9+' : me.av}</i>` : ''}`;
-  $('#fab').hidden = !(pc && !['ini', 'pub'].includes(tab)); // celu: Publicar vive en el centro del menú. PC: botón flotante, salvo en Inicio (ahí está en la portada)
+  $('#fab').hidden = !(pc && cli && !['ini', 'pub'].includes(tab)); // celu: Publicar vive en el centro del menú. PC: botón flotante, salvo en Inicio (ahí está en la portada)
 }
 async function home() {
   try {

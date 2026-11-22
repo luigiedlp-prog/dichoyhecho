@@ -56,3 +56,13 @@
 - Arreglo: los links a términos y privacidad (`legal.html#...`) daban ERR_FAILED. Cloudflare redirige `/legal.html` a `/legal`, y el service worker devolvía esa respuesta redirigida desde la caché, cosa que el navegador no acepta en una navegación. Ahora `sw.js` rearma una copia limpia (`limpia()`).
 - `sw.js` en ct-v87 y con `modusgrid.webp` en el caché.
 
+
+# v95 · Escritorio también para trabajadores
+
+- En PC (1100 px o más) el trabajador ahora ve el mismo layout que el cliente: menú lateral fijo, barra superior con buscador e Inicio tipo panel. Antes era solo del cliente y el trabajador veía la versión del celu estirada.
+- Menú del trabajador: Inicio, Pedidos, Propuestas, Locales, Perfil, Configuración y Ayuda (`navPC()` en `app/escritorio.js`). El del cliente no cambia.
+- Buscador de arriba: el del trabajador busca pedidos (lleva a Pedidos con lo escrito); el del cliente sigue buscando trabajadores en el Directorio (`app/acciones.js`).
+- Inicio del trabajador (`iniTrab()` en `app/escritorio.js`): Tus propuestas (estado real: te eligieron, enviada, terminada, cerrada), Explorá, perfil con propuestas, reseñas y pedidos abiertos, accesos rápidos (Pedidos, Mis datos y rubros, Alertas, Soporte) y Actividad reciente. Usa solo `mis-postulaciones`, `locales` y `zona`: no hay cambios en el Worker ni en D1.
+- En PC, la pantalla Pedidos del trabajador ya no lleva la portada con foto arriba (`vistas.js`); queda filtros a la izquierda y pedidos en grilla. El botón flotante "Publicar pedido" sigue siendo solo del cliente.
+- Con menos de 1100 px (celu, tablet y ventanas angostas) todo queda como antes.
+- `sw.js` en ct-v95.

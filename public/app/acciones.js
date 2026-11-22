@@ -871,6 +871,12 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   if (e.target.id === 'hq') {
+    if (me && me.tipo === 'trabajador') {
+      // trabajador: el buscador de arriba busca pedidos
+      FQ = e.target.value;
+      A.tab({ t: 'feed' });
+      return;
+    }
     DQ = e.target.value;
     DR = '';
     DP = 1;

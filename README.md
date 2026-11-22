@@ -8,7 +8,7 @@ Pedidos y trabajadores de Pergamino. App en `public/` (HTML/CSS/JS sin build) + 
   Son scripts comunes que comparten variables, así que **el orden de `index.html` importa** (y `sw.js` tiene que listarlos todos).
   - `reglas.js` reglas compartidas con el Worker (teléfono, PIN, pregunta de seguridad, nombre, mail, rubros).
   - `app/` base, utiles, componentes, portada-registro, navegacion, mapa, listas, vistas, escritorio, acciones, gestion, arranque.
-  - `escritorio.css` + `app/escritorio.js`: layout de PC (1100 px o más) para el cliente: menú lateral, buscador arriba e Inicio tipo panel. Celu y tablet no lo usan.
+  - `escritorio.css` + `app/escritorio.js`: layout de PC (1100 px o más) para cliente y trabajador: menú lateral, buscador arriba e Inicio tipo panel (cada tipo de cuenta con su menú, su buscador y su Inicio). Celu y tablet no lo usan.
 - `src/worker.js` entrada (fetch y cron) y despachador. `src/rutas/*.js` las rutas de la API; cada una recibe un contexto `C`
   y devuelve una `Response` si la ruta es suya. `src/comun.js` ayudas y constantes; `src/avisos.js` avisos y push.
 - `schema.sql` crea la base D1 desde cero (alcanza para la primera subida).

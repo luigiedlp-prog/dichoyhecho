@@ -30,11 +30,16 @@ const ARR = dsv('arr');
 function navPC() {
   const it = (k, t, lb, on) =>
     `<div class="sbi${on ? ' on' : ''}" role="button" tabindex="0" data-a="${k === 'ayu' ? 'guiaver' : 'tab'}" data-t="${t}">${dsv(k)}<span>${lb}</span></div>`;
-  const nom = esc(me.nombre || '');
+  const nom = esc(me.nombre || ''),
+    w = me.tipo === 'trabajador',
+    on = (t) => tab === t || (t === 'perfil' && tab === 'pfotos'),
+    lista = w
+      ? `${it('ini', 'ini', 'Inicio', on('ini'))}${it('bag', 'feed', 'Pedidos', on('feed'))}${it('mis', 'mp', 'Propuestas', on('mp'))}${it('loc', 'loc', 'Locales', on('loc'))}${it('perfil', 'perfil', 'Perfil', on('perfil'))}${it('cfg', 'perfil', 'Configuración', false)}${it('ayu', 'ini', 'Ayuda', false)}`
+      : `${it('ini', 'ini', 'Inicio', on('ini'))}${it('mis', 'mis', 'Mis pedidos', on('mis'))}${it('loc', 'loc', 'Locales', on('loc'))}${it('perfil', 'perfil', 'Perfil', on('perfil'))}${it('cfg', 'perfil', 'Configuración', false)}${it('ayu', 'ini', 'Ayuda', false)}`;
   return `<div class="sb-br"><img src="icon-192.png" width="60" height="60" alt=""><b class="wm" aria-label="Dicho y Hecho">Dicho y<span>Hecho</span></b></div>
-  <div class="sb-ls">${it('ini', 'ini', 'Inicio', tab === 'ini')}${it('mis', 'mis', 'Mis pedidos', tab === 'mis')}${it('loc', 'loc', 'Locales', tab === 'loc')}${it('perfil', 'perfil', 'Perfil', tab === 'perfil')}${it('cfg', 'perfil', 'Configuración', false)}${it('ayu', 'ini', 'Ayuda', false)}</div>
+  <div class="sb-ls">${lista}</div>
   <div class="sb-gd"><i>${dsv('target')}</i><b>Alcanza tus objetivos</b><p>Con Dicho y Hecho es más fácil.</p><span class="sb-bt" role="button" tabindex="0" data-a="guiaver">Ver guía ${ARR}</span></div>
-  <div class="sb-us" role="button" tabindex="0" data-a="tab" data-t="perfil">${av(me.id, me.fv, me.nombre, 'sb-av')}<div><b>${nom}</b><span>Cliente • ${esc(me.barrio || 'Pergamino')}</span></div><i class="sb-on" aria-hidden="true"></i></div>
+  <div class="sb-us" role="button" tabindex="0" data-a="tab" data-t="perfil">${av(me.id, me.fv, me.nombre, 'sb-av')}<div><b>${nom}</b><span>${w ? 'Trabajador' : 'Cliente'} • ${esc(me.barrio || 'Pergamino')}</span></div><i class="sb-on" aria-hidden="true"></i></div>
   <div class="credit sb-cr"><a href="https://instagram.com/modus.grid" target="_blank" rel="noopener"><img src="modusgrid.webp" alt="Logo de modus.grid" width="34" height="34"><span>Sistema hecho por <b>@modus.grid</b></span></a></div>`;
 }
 
@@ -43,10 +48,18 @@ function shellBar(pc) {
   const h = document.querySelector('header'),
     b = h && h.querySelector('.tbs');
   if (!pc) return b && b.remove();
-  if (b) return;
+  const w = me && me.tipo === 'trabajador',
+    ph = w ? 'Buscar pedidos, rubros o barrios…' : 'Buscar trabajadores, locales o servicios…',
+    al = w ? 'Buscar pedidos' : 'Buscar trabajadores';
+  if (b) {
+    const i = b.querySelector('input');
+    i.placeholder = ph;
+    i.setAttribute('aria-label', al);
+    return;
+  }
   const l = document.createElement('label');
   l.className = 'tbs';
-  l.innerHTML = `${sv(X.srch)}<input id="hq" type="search" placeholder="Buscar trabajadores, locales o servicios…" aria-label="Buscar trabajadores" autocomplete="off" enterkeyhint="search">`;
+  l.innerHTML = `${sv(X.srch)}<input id="hq" type="search" placeholder="${ph}" aria-label="${al}" autocomplete="off" enterkeyhint="search">`;
   h.insertBefore(l, h.firstChild);
 }
 
@@ -85,7 +98,10 @@ function dAct(l) {
     : '<li class="vc"><div><span>Todavía no hay actividad. Publicá tu primer pedido.</span></div></li>';
 }
 
-view.ini = async function () {
+view.ini = function () {
+  return me.tipo === 'trabajador' ? iniTrab() : iniCli();
+};
+async function iniCli() {
   const [l, lc] = await Promise.all([api('mis-pedidos'), api('locales').catch(() => [])]);
   LC = l;
   const need = (c) => (c.estado === 'abierta' && c.post.length > 0) || (c.estado === 'hecha' && !c.punt),
@@ -112,7 +128,72 @@ ${top.length ? '<div class="dsh-or">' + top.map(dOrd).join('') + '</div>' : `<di
   dshFit();
   document.fonts?.ready.then(dshFit);
   addEventListener('load', dshFit, { once: true });
+}
+
+// ---- Inicio del trabajador (v95): mismo panel que el del cliente, con sus propios datos ----
+// Grupo de cada propuesta (igual que en Propuestas): m en marcha, e enviada, t terminada, c cerrada, d descartada
+const wg = (p) =>
+  p.estado === 'descartada' ? 'd' : p.estado === 'elegida' ? (p.cestado === 'hecha' ? 't' : 'm') : p.cestado === 'abierta' ? 'e' : 'c';
+// etiqueta, ícono, paso (de 4), si hay novedad y texto, según el estado real de la propuesta
+const WE = {
+  m: ['Te eligieron', 'truck', 3, 1, 'Coordiná con el cliente'],
+  e: ['Enviada', 'clk', 1, 0, 'Esperando que el cliente elija'],
+  t: ['Terminado', 'ok', 4, 0, 'Trabajo terminado'],
+  c: ['Cerrado', 'clk', 0, 0, 'El pedido ya no está abierto'],
+  d: ['No elegida', 'clk', 0, 0, 'El cliente no te eligió'],
 };
+const wOrd = (p) => {
+  const [lb, ic, st, co, tx] = WE[wg(p)];
+  return `<div class="dsh-oc" role="button" tabindex="0" data-a="tab" data-t="mp"><div class="oc-h"><i class="oc-i${co ? ' co' : ''}${st ? '' : ' gr'}">${dsv(ic)}</i><div><b class="${co ? 'co' : ''}">${lb}</b><span>${esc(p.cliente || 'Cliente')} · ${fec(p.creado)}</span></div><i class="oc-c">${CHEV}</i></div><h3>${esc(p.titulo)}</h3><p>${tx}</p><div class="oc-b"><i class="${co ? 'co' : ''}" style="width:${st * 25}%"></i></div></div>`;
+};
+// Actividad reciente: se arma con lo que pasó en tus propuestas (te postulaste, te eligieron, se hizo)
+function wAct(l) {
+  const ev = [];
+  l.forEach((p) => {
+    ev.push([p.creado, p.titulo, 'Te postulaste']);
+    if (p.estado === 'elegida' && p.elegida_en) ev.push([p.elegida_en, p.titulo, 'Te eligieron para este pedido']);
+    if (p.estado === 'elegida' && p.hecha_en) ev.push([p.hecha_en, p.titulo, 'Se marcó como hecho']);
+  });
+  ev.sort((a, b) => b[0] - a[0]);
+  return ev.length
+    ? ev
+        .slice(0, 3)
+        .map(
+          (e, i) =>
+            `<li class="${i ? '' : 'dn'}"><i></i><div><b>${esc(String(e[1] || 'Pedido').slice(0, 34))}</b><span>${e[2]}</span></div><time>${ago(e[0]).replace(/^h/, 'H')}</time></li>`,
+        )
+        .join('')
+    : '<li class="vc"><div><span>Todavía no hay actividad. Mirá los pedidos abiertos y postulate.</span></div></li>';
+}
+async function iniTrab() {
+  const [l, lc, z] = await Promise.all([
+    api('mis-postulaciones'),
+    api('locales').catch(() => []),
+    api('zona').catch(() => ({})),
+  ]);
+  LP = l;
+  const RK = { m: 0, e: 1, t: 2, c: 3, d: 4 },
+    top = [...l].sort((a, b) => RK[wg(a)] - RK[wg(b)] || b.id - a.id).slice(0, 3),
+    nom = esc((me.nombre || '').split(' ')[0]),
+    sup = (window.CFG || {}).soporte,
+    tile = (k, lb, t) => `<button class="dsh-tl" data-a="tab" data-t="${t}">${dsv(k)}<span>${lb}</span></button>`,
+    qa = (k, lb, at) =>
+      `<${at.startsWith('href') ? 'a' : 'button'} class="dsh-qa" ${at}>${dsv(k)}<span>${lb}</span></${at.startsWith('href') ? 'a' : 'button'}>`;
+  set(`<div class="dsh"><div class="dsh-c">
+<section class="dsh-hero"><img src="img/hero-iglesia.webp" alt="" width="1010" height="650" decoding="async"><i class="hs-t"></i><i class="hs-c"></i><div class="hs-x"><b class="wm" aria-label="Dicho y Hecho">Dicho y <span>Hecho</span></b><p>Alguien lo necesita.<br>Alguien lo hace.</p><button class="hs-b" data-a="tab" data-t="feed">${dsv('bag')}Ver pedidos abiertos</button></div></section>
+<div class="dsh-sh"><h2 class="dsh-t">Tus propuestas</h2><button class="dsh-vl" data-a="tab" data-t="mp">Ver todas ${ARR}</button></div>
+${top.length ? '<div class="dsh-or">' + top.map(wOrd).join('') + '</div>' : `<div class="dsh-em"><b>Todavía no te postulaste a ningún pedido</b><p>Mirá los pedidos abiertos en Pergamino y ofrecete a los que sean de lo tuyo.</p><button class="hs-b" data-a="tab" data-t="feed">${dsv('bag')}Ver pedidos abiertos</button></div>`}
+<div class="dsh-rw"><div><div class="dsh-sh"><h2 class="dsh-t ct">Explorá</h2></div><div class="dsh-ct">${tile('bag', 'Pedidos<br>abiertos', 'feed')}${tile('mis', 'Mis<br>propuestas', 'mp')}${tile('loc', 'Locales<br>verificados', 'loc')}${tile('star', 'Mis<br>reseñas', 'perfil')}</div></div>
+<button class="dsh-bn" data-a="tab" data-t="feed"><img src="img/trabajador.webp" alt="" width="520" height="380" loading="lazy"><span class="bn-x"><b>Más trabajo.<em>Más clientes.</em></b><span class="hs-b">Ver pedidos ${ARR}</span></span></button></div>
+</div><aside class="dsh-r">
+<section class="dsh-pc"><div class="pf"><span class="pf-a">${me.fv ? av(me.id, me.fv, me.nombre, 'pf-im') : sv('<path d="' + SV.user + '"/>')}</span><div><b>Hola, ${nom} 👋</b><span>Trabajador • ${esc(me.barrio || 'Pergamino')}</span></div></div><div class="st"><div>${dsv('mis')}<b>${l.length}</b><span>Propuestas</span></div><div>${dsv('star')}<b>${me.n || 0}</b><span>Reseñas</span></div><div>${dsv('bag')}<b>${+z.pedidos || 0}</b><span>Abiertos</span></div></div><button class="pf-b" data-a="tab" data-t="perfil">Ver mi perfil ${ARR}</button></section>
+<section class="dsh-pc"><h2 class="dsh-h">${dsv('bolt')}Mis accesos rápidos</h2><div class="qs">${qa('bag', 'Pedidos<br>abiertos', 'data-a="tab" data-t="feed"')}${qa('perfil', 'Mis datos<br>y rubros', 'data-a="edperfil"')}${qa('bolt', 'Alertas<br>inmediatas', 'data-a="alertas"')}${qa('head', 'Soporte', sup ? `href="https://wa.me/${esc(sup)}" target="_blank" rel="noopener"` : 'href="legal.html#cuidarte" target="_blank" rel="noopener"')}</div></section>
+<section class="dsh-pc"><div class="ah"><h2 class="dsh-h">${dsv('pie')}Actividad reciente</h2><button class="dsh-vl" data-a="tab" data-t="mp">Ver todas ${ARR}</button></div><ul class="ac-l">${wAct(l)}</ul></section>
+</aside></div>`);
+  dshFit();
+  document.fonts?.ready.then(dshFit);
+  addEventListener('load', dshFit, { once: true });
+}
 // Sin scroll: el Inicio se achica (zoom) hasta entrar en el alto de la ventana. Mínimo 55 %, para que se siga leyendo.
 function dshFit() {
   const e = document.querySelector('.dsh');
