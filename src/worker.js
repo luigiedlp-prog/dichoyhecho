@@ -64,7 +64,7 @@ export default {
   async scheduled(ev, env, ctx) {
     const n = Date.now(),
       D = env.DB;
-    // Cada 5 minutos: avisos demorados (a los 45 min les llega a quienes no tienen alertas) y lotes que quedaron pendientes
+    // Cada 5 minutos: avisos demorados (a los 10 min les llega a quienes no tienen alertas) y lotes que quedaron pendientes
     const ps = (
       await D.prepare(
         "SELECT id,rubro,titulo,dest_hasta,aviso_en,aviso_pend FROM pedidos WHERE aviso_pend=1 AND estado='abierta' AND COALESCE(oculta,0)=0 ORDER BY id LIMIT 5",

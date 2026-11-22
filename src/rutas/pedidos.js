@@ -87,7 +87,7 @@ export default async function pedidos(C) {
         { id: ins.meta.last_row_id, rubro: b.rubro, titulo: t, dest_hasta: 0, aviso_en: now + DEMORA, aviso_pend: 1 },
         now,
       ),
-    ); // alertas pagas: ya; el resto, a los 45 min
+    ); // alertas pagas: ya; el resto, a los 10 min
     return J({ ok: 1 });
   }
   if (p[0] === 'mis-pedidos') {

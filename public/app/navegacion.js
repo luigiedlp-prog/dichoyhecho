@@ -5,7 +5,7 @@ async function potenciar(tipo, pid) {
     dura = d ? '72 horas' : '7 días',
     desc = d
       ? 'Tu pedido sale primero en la lista con la etiqueta Destacado y avisamos enseguida a todos los trabajadores del rubro. No garantiza que te respondan.'
-      : 'Durante 7 días te avisamos apenas se publica un pedido de tus rubros, sin esperar los 45 minutos. No garantiza que consigas trabajo. Tenés que tener activados los avisos del celular (Perfil > Activar avisos).';
+      : 'Durante 7 días te avisamos apenas se publica un pedido de tus rubros, sin esperar los 10 minutos. No garantiza que consigas trabajo. Tenés que tener activados los avisos del celular (Perfil > Activar avisos).';
   if (!((me.gratis || 0) > 0)) {
     await dlg({
       t: d ? 'Destacar pedido' : 'Alertas inmediatas',

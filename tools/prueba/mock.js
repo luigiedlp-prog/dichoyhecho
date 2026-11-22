@@ -541,7 +541,7 @@
   const lg = (t, d) => S.logs.push({ creado: nowT(), tipo: t, detalle: String(d).slice(0, 200) });
   const avs = (l) =>
     l.forEach(([u, t]) => S.avisos.push({ id: nid('a'), usuario_id: u, texto: t, creado: nowT(), leido: 0 }));
-  // Avisos: con alertas pagas o destacado, enseguida; si no, a los 45 minutos (se avanza el reloj desde el panel de la prueba)
+  // Avisos: con alertas pagas o destacado, enseguida; si no, a los 10 minutos (se avanza el reloj desde el panel de la prueba)
   const notif = (c, now) => {
     const dest = (c.dest_hasta || 0) > now,
       libre = dest || (c.aviso_en > 0 && c.aviso_en <= now);
@@ -1924,7 +1924,7 @@
         oculta: 0,
         dest_desde: 0,
         dest_hasta: 0,
-        aviso_en: now + 45 * MIN,
+        aviso_en: now + 10 * MIN,
         aviso_pend: 1,
       });
       addF(id, b.fotos);

@@ -66,3 +66,10 @@
 - En PC, la pantalla Pedidos del trabajador ya no lleva la portada con foto arriba (`vistas.js`); queda filtros a la izquierda y pedidos en grilla. El botón flotante "Publicar pedido" sigue siendo solo del cliente.
 - Con menos de 1100 px (celu, tablet y ventanas angostas) todo queda como antes.
 - `sw.js` en ct-v95.
+
+# v96 · Aviso demorado de 45 a 10 minutos
+
+- Quien no tiene alertas inmediatas recibe el aviso de un pedido nuevo a los 10 minutos (antes 45). Es la constante `DEMORA` en `src/comun.js`; se actualizaron el texto de Alertas en `app/navegacion.js`, los comentarios y los tests.
+- Solo vale para los pedidos que se publiquen desde ahora: los que ya estaban esperando conservan su hora de aviso original.
+- El cron corre cada 5 minutos (`wrangler.toml`), así que el aviso real llega entre los 10 y los 15 minutos.
+- `sw.js` en ct-v96.

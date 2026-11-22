@@ -275,7 +275,7 @@ ok(r.s === 404, 'Gestión ya no activa pagos');
 r = await call('admin/ajuste', { clave: 'precio_destacado', valor: 2000 }, '', AD);
 ok(r.s === 400, 'Gestión ya no tiene precios para ajustar');
 await call('admin/ajuste', { clave: 'primera_gratis', valor: 0 }, '', AD); // acá las potenciaciones salen de las ganadas (promos); la primera gratis se prueba en v35
-// ---- Alertas pagas vs avisos demorados 45 min
+// ---- Alertas pagas vs avisos demorados 10 min
 const mk = async (nom, tel, tipo, rub) => {
   let x = await call('registro', {
     tipo,
@@ -328,7 +328,7 @@ await W.scheduled({}, env, ctx);
 ok(av(wb) === 0, 'a los 5 minutos el que no pagó sigue sin aviso');
 db.prepare('UPDATE pedidos SET aviso_en=? WHERE id=?').run(Date.now() - 1000, pc);
 await W.scheduled({}, env, ctx);
-ok(av(wb) === 1 && av(wa) === 1, 'pasados los 45 min le llega al que no pagó, sin repetir al que ya tenía');
+ok(av(wb) === 1 && av(wa) === 1, 'pasados los 10 min le llega al que no pagó, sin repetir al que ya tenía');
 ok(
   db.prepare('SELECT aviso_pend p FROM pedidos WHERE id=?').get(pc).p === 0,
   'el pedido deja de estar pendiente de avisos',

@@ -80,7 +80,7 @@ export async function avisar(env, items) {
   );
 }
 // Avisa a los trabajadores del rubro, de a 40, sin repetir (tabla avisados).
-// Con alertas pagas o pedido destacado: enseguida. Sin alertas: recién a los 45 minutos.
+// Con alertas pagas o pedido destacado: enseguida. Sin alertas: recién a los 10 minutos.
 export async function notificar(env, ped, now) {
   const D = env.DB,
     dest = ped.dest_hasta > now,
