@@ -167,7 +167,7 @@ export default async function cuenta(C) {
     if (r0.length > MAXR) return E('Elegí hasta ' + MAXR + ' rubros');
     const r = JSON.stringify(tra && !r0.length ? ['Otros'] : r0); // sin rubro elegido, el trabajador queda en "Otros"
     const nm = NOM(b.nombre || me.nombre);
-    if (!nm) return E('Poné tu nombre y apellido');
+    if (!nm) return E('Poné tu nombre y apellido, solo con letras');
     const ml =
       b.mail === undefined
         ? me.mail

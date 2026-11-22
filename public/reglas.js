@@ -55,14 +55,22 @@
   };
   const telValido = (t) => t.length >= TEL_MIN && t.length <= TEL_MAX;
 
-  // Nombre y apellido: al menos dos palabras (la primera y la última de 2 letras o más).
-  // Devuelve el nombre limpio, o "" si no sirve.
+  // Nombre y apellido: solo letras (con tildes, ñ, ü). Dentro de una palabra se aceptan ' y - entre letras (D'Angelo, María-José).
+  // Al menos dos palabras (la primera y la última de 2 letras o más), hasta 6. Devuelve el nombre limpio, o "" si no sirve.
+  const PALABRA = /^[\p{L}\p{M}]+(?:['’-][\p{L}\p{M}]+)*$/u;
   const nombre = (n) => {
     const w = String(n || '')
+      .normalize('NFC')
       .trim()
       .replace(/\s+/g, ' ')
       .split(' ');
-    return w.length >= 2 && w[0].length >= 2 && w[w.length - 1].length >= 2 ? w.join(' ').slice(0, 60) : '';
+    return w.length >= 2 &&
+      w.length <= 6 &&
+      w[0].length >= 2 &&
+      w[w.length - 1].length >= 2 &&
+      w.every((x) => PALABRA.test(x))
+      ? w.join(' ').slice(0, 60)
+      : '';
   };
 
   const MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

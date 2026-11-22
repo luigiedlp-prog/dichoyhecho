@@ -179,7 +179,7 @@ const A = {
   },
   async reg() {
     REG.guardar();
-    if (!okNom(REG.datos.n)) throw new Error('Poné tu nombre y tu apellido');
+    if (!okNom(REG.datos.n)) throw new Error('Poné tu nombre y tu apellido, solo con letras');
     if (!REGLAS.telValido(REG.datos.tl)) throw new Error('Revisá el teléfono: poné el código de área y el número');
     {
       const e = REGLAS.errPin(REG.datos.pn);
@@ -617,7 +617,7 @@ const A = {
       ok: 'Guardar cambios',
       v: (x) =>
         !okNom(x.n)
-          ? 'Poné tu nombre y apellido.'
+          ? 'Poné tu nombre y apellido, solo con letras.'
           : !okMail(String(x.ml || '').trim())
             ? 'El mail no es válido.'
             : w && x.rb.length > 3

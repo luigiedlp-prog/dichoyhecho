@@ -61,7 +61,7 @@ export default async function publicas(C) {
   if (p[0] === 'registro' && m === 'POST') {
     if (!['cliente', 'trabajador'].includes(b.tipo)) return E('Elegí si sos cliente o trabajador');
     if (!b.acepto) return E('Tenés que aceptar el aviso legal');
-    if (!NOM(b.nombre)) return E('Poné tu nombre y apellido');
+    if (!NOM(b.nombre)) return E('Poné tu nombre y apellido, solo con letras');
     const ml = String(b.mail || '')
       .trim()
       .toLowerCase()
