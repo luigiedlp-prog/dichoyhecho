@@ -39,7 +39,7 @@ export default async function admin(C) {
       if (z === 'trabajadores')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.suspendido,u.creado,u.promos,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.suspendido,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -52,7 +52,7 @@ export default async function admin(C) {
       if (z === 'clientes')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.creado,u.promos,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,

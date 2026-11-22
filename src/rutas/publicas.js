@@ -9,6 +9,7 @@ import {
   NR,
   PGEN,
   PIN,
+  PIONEROS,
   PREG,
   REFRE,
   aj,
@@ -105,7 +106,7 @@ export default async function publicas(C) {
       ]);
     try {
       r = await q(
-        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado,rubros) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado,rubros,pionero) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT CASE WHEN COUNT(*)<? THEN 1 ELSE 0 END FROM usuarios WHERE pionero=1))',
         b.tipo,
         NOM(b.nombre),
         tel,
@@ -121,6 +122,7 @@ export default async function publicas(C) {
         await mk(rs),
         now,
         b.tipo === 'trabajador' ? '["Otros"]' : '[]',
+        PIONEROS,
       ).run();
     } catch (e) {
       return E('Ese teléfono ya está registrado', 409);

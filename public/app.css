@@ -5977,3 +5977,60 @@ html[data-tema='light'] .brand-lg p {
     margin-top: -116px;
   }
 }
+
+/* Insignia Pionero (primeras 50 cuentas) */
+.pio {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  vertical-align: 1px;
+  white-space: nowrap;
+  color: #be123c;
+  background: rgba(251, 113, 133, 0.14);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+.pio svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+.pio.mini {
+  padding: 2px;
+  gap: 0;
+}
+.pio.mini svg {
+  width: 13px;
+  height: 13px;
+}
+html[data-tema='dark'] .pio {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.16);
+  border-color: rgba(251, 113, 133, 0.38);
+}
+.mt-who .pio {
+  margin-left: 4px;
+}
+
+/* Cartelito de bienvenida Pionero */
+.pioc {
+  width: 76px;
+  height: 76px;
+  margin: 6px auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.16);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+.pioc svg {
+  width: 40px;
+  height: 40px;
+}

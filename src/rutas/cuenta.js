@@ -96,6 +96,11 @@ export default async function cuenta(C) {
       tel_pend: telPend ? 1 : 0,
     });
   }
+  // El cartelito de bienvenida Pionero se muestra una sola vez por cuenta
+  if (p[0] === 'pionero-visto' && m === 'POST') {
+    await q('UPDATE usuarios SET pionero_visto=1 WHERE id=?', me.id).run();
+    return J({ ok: 1 });
+  }
   if (p[0] === 'perfil-foto' && m === 'POST') {
     if (b.borrar) {
       await q('DELETE FROM perfil_fotos WHERE usuario_id=?', me.id).run();
@@ -234,7 +239,7 @@ export default async function cuenta(C) {
       ),
       D.prepare('UPDATE usuarios SET ref_por=0 WHERE ref_por=?').bind(id),
       D.prepare(
-        "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',bio='',dni='',direccion='',mail='',suspendido=1,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='' WHERE id=?",
+        "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',bio='',dni='',direccion='',mail='',suspendido=1,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
       ).bind('eliminada-' + id, await mk(rnd(12)), await mk(rnd(12)), id),
     ]);
     await log(D, 'cuenta', 'Cuenta eliminada por su dueño (#' + id + ', ' + me.tipo + ')');

@@ -47,6 +47,8 @@ export const iguales = (a, b) => {
   for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   return d === 0;
 };
+// Las primeras PIONEROS cuentas que se registran llevan la insignia "Pionero" (columna usuarios.pionero, de por vida)
+export const PIONEROS = 50;
 export const REF_N = 5,
   REF_MAX = 3,
   MAILRE = R.MAIL,

@@ -34,3 +34,7 @@ npm run prueba           # arma ../dichoyhecho-prueba.html (app + servidor simul
 ## Modelo gratuito (v83)
 
 Todo es gratis: publicar, registrarse, ofrecer servicios, proponer y perfiles de comercio. Sin comisiones ni suscripciones, y sin cobro de potenciaciones. `src/rutas/potenciaciones.js` (`POST /api/potenciar`) activa destacado (72 hs) y alertas (7 días) con la primera potenciación de cada cuenta o las ganadas por invitar. Los anuncios recompensados de Google están pendientes: cuando se integren, la recompensa se tiene que validar desde el Worker. Todo sigue en D1.
+
+## Insignia Pionero (v85)
+
+Las primeras 50 cuentas que se registran (clientes y trabajadores) llevan la insignia "Pionero", de por vida. Se guarda en `usuarios.pionero` y la asigna el registro en la misma sentencia que inserta la cuenta (`PIONEROS` en `src/comun.js`, no hay carrera entre dos registros a la vez). Si una cuenta se elimina, libera su lugar y lo toma la próxima que se registre. Una base que ya existe necesita correr una vez `migracion-pionero.sql`. Al entrar por primera vez, cada Pionero ve un cartelito de bienvenida (una sola vez, `usuarios.pionero_visto`). Prueba: `node tools/probar-pionero.mjs`.

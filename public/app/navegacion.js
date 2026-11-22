@@ -122,13 +122,14 @@ async function home() {
   nav();
   if (['feed', 'mp', 'mis', 'nov', 'loc', 'dir', 'ini'].includes(tab)) set(skel());
   go(() => view[tab]());
+  if (me.pionero && !me.pionero_visto && !window.__pioVisto) pionAviso();
 }
 const mtr = (n) =>
   `<span class="mtr${n >= 8 ? ' hot' : ''}" role="img" aria-label="${n} de 10 postulantes">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'f' : ''}"></i>`).join('')}</span>`;
 const mc2 = (b, t, q) =>
   `<div class="mc2"><span class="mt1">${sv(X.pin)} ${esc(b || 'Sin barrio')}</span><span class="mt1">${sv(X.clk)} ${t}</span>${q || ''}</div>`;
 const chg = (c) =>
-  `<article class="card rich${c.dest ? ' dst' : ''}${c.inv ? ' invd' : ''}" style="--rc:${RC[c.rubro] || '#14B8A6'}">${cab({ ...c, bd: (c.dest ? '<span class="bd dest">Destacado</span>' : '') + (c.inv ? '<span class="bd inv">Te invitaron</span>' : '') }, c.rubro)}${mc2(c.barrio, ago(c.creado), c.cn ? `<span class="mt1 mt-who">${av(c.cid, c.cfv, c.cn, 'av s18')}${esc(c.cn)}${vb(c.ver)}</span>` : '')}${c.descripcion ? `<p class="ds">${esc(c.descripcion)}</p>` : ''}${th(c.fotos)}<div class="fl"><span class="pr">${esc(c.presupuesto)}</span><span class="pst">${mtr(c.n)}<span class="s">${c.n}/10</span></span>${c.suyo && !fr && !mr ? '<span class="bd elegida">Tu rubro</span>' : ''}</div><div class="ac">${c.ya ? '<span class="okk">' + sv(X.chk) + ' Ya te postulaste</span>' : !c.suyo && !c.inv && CUPO === 0 ? '<span class="s nc">Hoy ya no te quedan propuestas fuera de tus rubros.</span>' : `<button class="btn" data-a="post" data-id="${c.id}">Postularme</button>`}<button class="ico" data-a="den" data-id="${c.id}" aria-label="Denunciar este pedido">${sv(X.flag)}</button></div></article>`;
+  `<article class="card rich${c.dest ? ' dst' : ''}${c.inv ? ' invd' : ''}" style="--rc:${RC[c.rubro] || '#14B8A6'}">${cab({ ...c, bd: (c.dest ? '<span class="bd dest">Destacado</span>' : '') + (c.inv ? '<span class="bd inv">Te invitaron</span>' : '') }, c.rubro)}${mc2(c.barrio, ago(c.creado), c.cn ? `<span class="mt1 mt-who">${av(c.cid, c.cfv, c.cn, 'av s18')}${esc(c.cn)}${vb(c.ver)}${pb(c.pio, 1)}</span>` : '')}${c.descripcion ? `<p class="ds">${esc(c.descripcion)}</p>` : ''}${th(c.fotos)}<div class="fl"><span class="pr">${esc(c.presupuesto)}</span><span class="pst">${mtr(c.n)}<span class="s">${c.n}/10</span></span>${c.suyo && !fr && !mr ? '<span class="bd elegida">Tu rubro</span>' : ''}</div><div class="ac">${c.ya ? '<span class="okk">' + sv(X.chk) + ' Ya te postulaste</span>' : !c.suyo && !c.inv && CUPO === 0 ? '<span class="s nc">Hoy ya no te quedan propuestas fuera de tus rubros.</span>' : `<button class="btn" data-a="post" data-id="${c.id}">Postularme</button>`}<button class="ico" data-a="den" data-id="${c.id}" aria-label="Denunciar este pedido">${sv(X.flag)}</button></div></article>`;
 
 // el botón flotante "Publicar pedido" se esconde al bajar y vuelve al subir, para no tapar los botones de abajo
 let fabY = 0;

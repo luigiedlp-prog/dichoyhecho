@@ -49,6 +49,29 @@ const vb = (v) =>
   v
     ? `<svg class="ver" viewBox="0 0 24 24" role="img" aria-label="Verificado"><path d="${SELLO}" fill="#14b8a6" stroke="#14b8a6" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.6 12.4l3 3 5.8-6.2" fill="none" stroke="#0b1f1d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
     : '';
+const PIOI =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z"/></svg>';
+// Insignia "Pionero" (primeras 50 cuentas). mini = solo el ícono, para lugares chicos.
+const pb = (v, mini) =>
+  v
+    ? mini
+      ? `<span class="pio mini" role="img" aria-label="Pionero" title="Pionero: apoyó el proyecto en sus inicios">${PIOI}</span>`
+      : `<span class="pio" title="Pionero: apoyó el proyecto en sus inicios">${PIOI}Pionero</span>`
+    : '';
+// Cartelito de bienvenida para las cuentas Pionero: sale una sola vez (queda guardado en la cuenta)
+async function pionAviso() {
+  window.__pioVisto = 1;
+  await dlg({
+    t: '¡Sos Pionero!',
+    p: 'Sos una de las primeras 50 cuentas de Dicho y Hecho. Gracias por apoyar el proyecto en sus inicios: tu insignia te acompaña en tu perfil y cuando otros ven tu nombre.',
+    h: `<div class="pioc" aria-hidden="true">${PIOI}</div>`,
+    solo: 1,
+  });
+  try {
+    await api('pionero-visto', {});
+    me.pionero_visto = 1;
+  } catch (e) {}
+}
 const pe = (n) => '$' + Number(n).toLocaleString('es-AR');
 const av = (id, v, n, c) =>
   v
