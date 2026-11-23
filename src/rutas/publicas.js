@@ -199,7 +199,13 @@ export default async function publicas(C) {
       if (x && na >= 30) await q('UPDATE usuarios SET bloqueado_hasta=? WHERE id=?', now + 60 * MIN, x.id).run();
       return E('Teléfono o PIN incorrectos', 401);
     }
-    if (x.suspendido) return E('Cuenta suspendida', 403);
+    if (x.suspendido)
+      return E(
+        x.elim_pedida
+          ? 'Tu cuenta está suspendida y se va a eliminar cuando un administrador la revise.'
+          : 'Cuenta suspendida',
+        403,
+      );
     await q('DELETE FROM limites WHERE clave=?', kf).run();
     await q('UPDATE usuarios SET intentos=0 WHERE id=?', x.id).run();
     return J({ token: await sesion(D, x.id, now) });

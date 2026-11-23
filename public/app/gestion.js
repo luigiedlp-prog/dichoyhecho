@@ -100,6 +100,13 @@ const gconf = (d) =>
       'Le sacás a ' + d.t + ' los invitados y las potenciaciones ganadas sin usar, y ya no puede ganar más por invitar.',
       'Sí, anular',
     ],
+    elimdef: [
+      'Eliminar cuenta por completo',
+      'Se borran para siempre el perfil, las fotos, los pedidos, las postulaciones y los avisos de ' +
+        d.t +
+        '. El teléfono queda libre. No se puede deshacer.',
+      'Sí, eliminar',
+    ],
     susp: +d.on
       ? [
           'Suspender',
@@ -110,7 +117,7 @@ const gconf = (d) =>
   })[d.g];
 const gb = (a, t, x = '') => `<button class="btn g" data-g="${a}" ${x}>${t}</button>`;
 const gusr = (x, det) =>
-  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}</div></div>`;
+  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.elim_pedida ? ' <span class="bd cancelada">Pidió eliminar su cuenta</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}${x.elim_pedida && !/^eliminada-/.test(x.telefono) ? gb('elimdef', 'Eliminar por completo', `data-t="${esc(x.telefono)}"`) : ''}</div></div>`;
 const gnorm = (s) =>
   String(s ?? '')
     .toLowerCase()
@@ -881,6 +888,7 @@ document.addEventListener('click', (e) => {
       if (!r) return;
       await api('admin/' + d.g, { id: +d.id, t: d.t }, k);
     } else if (d.g === 'susp') await api('admin/suspender', { telefono: d.t, on: +d.on }, k);
+    else if (d.g === 'elimdef') await api('admin/eliminar-cuenta', { telefono: d.t }, k);
     else await api('admin/' + d.g, { id: +d.id }, k);
     toast('Listo');
     gestion();

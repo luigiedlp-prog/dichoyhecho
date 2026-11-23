@@ -723,15 +723,17 @@ const A = {
     toast('Avisos activados');
   },
   async borrar() {
+    let msg = '';
     const v = await dlg({
       t: 'Eliminar mi cuenta',
-      p: 'Se borran tu perfil, tus fotos, tus pedidos, tus postulaciones y tus avisos, y se cierra tu sesión. No se puede deshacer. Las reseñas que escribiste quedan sin tu nombre. Para confirmar, escribí tu PIN.',
+      p: 'Tu cuenta se suspende ahora y se cierra tu sesión. Cuando un administrador la revise, se elimina por completo: tu perfil, tus fotos, tus pedidos, tus postulaciones y tus avisos. Mientras tanto no vas a poder entrar. Para confirmar, escribí tu PIN.',
       f: [{ id: 'pin', lb: 'Tu PIN', type: 'password', mode: 'numeric', max: 6 }],
-      ok: 'Eliminar para siempre',
+      ok: 'Eliminar mi cuenta',
       v: async (x) => {
         if (!/^\d{4,6}$/.test(x.pin)) return 'Poné tu PIN.';
         try {
-          await api('cuenta-borrar', { pin: x.pin });
+          const r = await api('cuenta-borrar', { pin: x.pin });
+          msg = (r && r.msg) || '';
         } catch (e) {
           return e.message;
         }
@@ -739,7 +741,11 @@ const A = {
       },
     });
     if (!v) return;
-    toast('Tu cuenta se eliminó');
+    await dlg({
+      t: 'Cuenta suspendida',
+      p: msg || 'Tu cuenta quedó suspendida y se va a eliminar por completo cuando un administrador la revise.',
+      solo: 1,
+    });
     A.salir();
   },
   async telok() {

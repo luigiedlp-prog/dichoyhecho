@@ -209,41 +209,23 @@ export default async function cuenta(C) {
     await q('UPDATE usuarios SET dni=?,direccion=?,mail=? WHERE id=?', dni, dir, mail, me.id).run();
     return J({ ok: 1, ver: dni && dir && mail ? 1 : 0 });
   }
-  // Eliminar la cuenta: se borran el perfil, las fotos, los pedidos, las postulaciones y los avisos, y la fila queda anonimizada
-  // (sin datos personales y con el teléfono liberado). Se conservan los cobros (contabilidad) y las reseñas que escribió, sin su nombre.
+  // Eliminar la cuenta: NO se borra nada en el momento. La cuenta queda suspendida (se cierran sus sesiones y avisos) y el teléfono sigue
+  // ocupado, así nadie borra la cuenta para escaparse de algo malo. Cuando un administrador la revisa en Gestión, recién ahí se elimina
+  // por completo (borrarCuentaDefinitivo en comun.js).
   if (p[0] === 'cuenta-borrar' && m === 'POST') {
     if (await lim(D, 'del:' + me.id, 5, 60 * MIN, now)) return E('Demasiados intentos. Probá en un rato.', 429);
     if (!(await ok(String(b.pin || ''), me.pin_hash))) return E('El PIN no es correcto', 401);
-    const id = me.id,
-      mios = 'SELECT id FROM pedidos WHERE cliente_id=?',
-      conRes = 'SELECT pedido_id FROM puntuaciones';
     await D.batch([
-      ...['pedido_fotos', 'postulaciones', 'invitaciones', 'avisados'].map((t) =>
-        D.prepare('DELETE FROM ' + t + ' WHERE pedido_id IN (' + mios + ')').bind(id),
-      ),
-      D.prepare(
-        "UPDATE pedidos SET titulo='Pedido eliminado',descripcion='',presupuesto='',oculta=1,estado=CASE WHEN estado IN ('abierta','elegida') THEN 'cancelada' ELSE estado END WHERE cliente_id=? AND id IN (" +
-          conRes +
-          ')',
-      ).bind(id),
-      D.prepare('DELETE FROM pedidos WHERE cliente_id=? AND id NOT IN (' + conRes + ')').bind(id),
-      D.prepare(
-        'DELETE FROM resena_fotos WHERE puntuacion_id IN (SELECT id FROM puntuaciones WHERE trabajador_id=?)',
-      ).bind(id),
-      D.prepare('DELETE FROM puntuaciones WHERE trabajador_id=?').bind(id),
-      D.prepare('DELETE FROM postulaciones WHERE trabajador_id=?').bind(id),
-      D.prepare('DELETE FROM invitaciones WHERE trabajador_id=? OR cliente_id=?').bind(id, id),
-      D.prepare('DELETE FROM avisados WHERE usuario_id=?').bind(id),
-      ...['perfil_fotos', 'trabajos_fotos', 'push_subs', 'avisos', 'sesiones'].map((t) =>
-        D.prepare('DELETE FROM ' + t + ' WHERE usuario_id=?').bind(id),
-      ),
-      D.prepare('UPDATE usuarios SET ref_por=0 WHERE ref_por=?').bind(id),
-      D.prepare(
-        "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',bio='',dni='',direccion='',mail='',suspendido=1,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
-      ).bind('eliminada-' + id, await mk(rnd(12)), await mk(rnd(12)), id),
+      q('UPDATE usuarios SET suspendido=1,elim_pedida=? WHERE id=?', now, me.id),
+      q('DELETE FROM sesiones WHERE usuario_id=?', me.id),
+      q('DELETE FROM push_subs WHERE usuario_id=?', me.id),
     ]);
-    await log(D, 'cuenta', 'Cuenta eliminada por su dueño (#' + id + ', ' + me.tipo + ')');
-    return J({ ok: 1 });
+    await log(D, 'cuenta', 'Pidió eliminar su cuenta: queda suspendida hasta que un administrador la revise (#' + me.id + ', ' + me.tipo + ')');
+    ctx.waitUntil(push(env, [0], String(me.nombre).slice(0, 40) + ' pidió eliminar su cuenta. Queda suspendida hasta que la revises.'));
+    return J({
+      ok: 1,
+      msg: 'Tu cuenta quedó suspendida y se va a eliminar por completo cuando un administrador la revise.',
+    });
   }
   if (p[0] === 'push' && m === 'POST') {
     if (!/^https:\/\//.test(b.endpoint || '')) return E('Suscripción inválida');

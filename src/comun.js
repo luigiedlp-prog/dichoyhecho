@@ -229,3 +229,36 @@ export const lim = async (D, k, max, ms, now) => {
   await D.prepare('INSERT INTO limites(clave,creado) VALUES(?,?)').bind(k, now).run();
   return false;
 };
+
+// Borrado definitivo de una cuenta (lo dispara un administrador desde Gestión, después de revisar el pedido de eliminación).
+// Se borran el perfil, las fotos, los pedidos, las postulaciones y los avisos, y la fila queda anonimizada
+// (sin datos personales y con el teléfono liberado). Se conservan las reseñas que escribió, sin su nombre.
+export async function borrarCuentaDefinitivo(D, id) {
+  const mios = 'SELECT id FROM pedidos WHERE cliente_id=?',
+    conRes = 'SELECT pedido_id FROM puntuaciones';
+  await D.batch([
+    ...['pedido_fotos', 'postulaciones', 'invitaciones', 'avisados'].map((t) =>
+      D.prepare('DELETE FROM ' + t + ' WHERE pedido_id IN (' + mios + ')').bind(id),
+    ),
+    D.prepare(
+      "UPDATE pedidos SET titulo='Pedido eliminado',descripcion='',presupuesto='',oculta=1,estado=CASE WHEN estado IN ('abierta','elegida') THEN 'cancelada' ELSE estado END WHERE cliente_id=? AND id IN (" +
+        conRes +
+        ')',
+    ).bind(id),
+    D.prepare('DELETE FROM pedidos WHERE cliente_id=? AND id NOT IN (' + conRes + ')').bind(id),
+    D.prepare(
+      'DELETE FROM resena_fotos WHERE puntuacion_id IN (SELECT id FROM puntuaciones WHERE trabajador_id=?)',
+    ).bind(id),
+    D.prepare('DELETE FROM puntuaciones WHERE trabajador_id=?').bind(id),
+    D.prepare('DELETE FROM postulaciones WHERE trabajador_id=?').bind(id),
+    D.prepare('DELETE FROM invitaciones WHERE trabajador_id=? OR cliente_id=?').bind(id, id),
+    D.prepare('DELETE FROM avisados WHERE usuario_id=?').bind(id),
+    ...['perfil_fotos', 'trabajos_fotos', 'push_subs', 'avisos', 'sesiones'].map((t) =>
+      D.prepare('DELETE FROM ' + t + ' WHERE usuario_id=?').bind(id),
+    ),
+    D.prepare('UPDATE usuarios SET ref_por=0 WHERE ref_por=?').bind(id),
+    D.prepare(
+      "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',bio='',dni='',direccion='',mail='',suspendido=1,elim_pedida=0,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
+    ).bind('eliminada-' + id, await mk(rnd(12)), await mk(rnd(12)), id),
+  ]);
+}

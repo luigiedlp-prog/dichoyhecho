@@ -813,6 +813,7 @@
                 mail: u.mail,
                 alertas_hasta: u.alertas_hasta,
                 suspendido: u.suspendido,
+                elim_pedida: u.elim_pedida || 0,
                 creado: u.creado,
                 promos: u.promos || 0,
                 ref_por_nombre: (U(u.ref_por) || {}).nombre || null,
@@ -838,6 +839,7 @@
                 direccion: u.direccion,
                 mail: u.mail,
                 suspendido: u.suspendido,
+                elim_pedida: u.elim_pedida || 0,
                 creado: u.creado,
                 promos: u.promos || 0,
                 ref_por_nombre: (U(u.ref_por) || {}).nombre || null,
@@ -1111,8 +1113,68 @@
         lg('admin', 'Invitados y promociones por invitar anulados: ' + tel);
         return O;
       }
+      if (z === 'eliminar-cuenta') {
+        if (!us) return E('No existe esa cuenta', 404);
+        if (!us.suspendido) return E('Primero suspendé la cuenta');
+        const id = us.id,
+          res = new Set(S.punt.map((x) => x.pedido_id));
+        S.pedidos
+          .filter((c) => c.cliente_id === id)
+          .forEach((c) => {
+            S.fotos = S.fotos.filter((f) => f.pid !== c.id);
+            S.post = S.post.filter((x) => x.pedido_id !== c.id);
+            S.inv = S.inv.filter((x) => x.p !== c.id);
+          });
+        S.pedidos
+          .filter((c) => c.cliente_id === id && res.has(c.id))
+          .forEach((c) =>
+            Object.assign(c, {
+              titulo: 'Pedido eliminado',
+              descripcion: '',
+              presupuesto: '',
+              oculta: 1,
+              estado: 'cancelada',
+            }),
+          );
+        S.pedidos = S.pedidos.filter((c) => c.cliente_id !== id || res.has(c.id));
+        S.post = S.post.filter((x) => x.trabajador_id !== id);
+        S.punt = S.punt.filter((x) => x.trabajador_id !== id);
+        S.inv = S.inv.filter((x) => x.w !== id);
+        delete S.pf[id];
+        S.tf = S.tf.filter((x) => x.usuario_id !== id);
+        S.avisos = S.avisos.filter((a) => a.usuario_id !== id);
+        S.users.forEach((u) => {
+          if (u.ref_por === id) u.ref_por = 0;
+        });
+        Object.keys(S.ses).forEach((t) => {
+          if (S.ses[t] === id) delete S.ses[t];
+        });
+        Object.assign(us, {
+          nombre: 'Cuenta eliminada',
+          telefono: 'eliminada-' + id,
+          pin: 'x' + Math.random(),
+          rec: 'x' + Math.random(),
+          barrio: '',
+          rubros: '[]',
+          bio: '',
+          dni: '',
+          direccion: '',
+          mail: '',
+          suspendido: 1,
+          alertas_hasta: 0,
+          ref_cod: '',
+          ref_por: 0,
+          promos: 0,
+          elim_pedida: 0,
+        });
+        lg('admin', 'Cuenta eliminada por completo (#' + id + ', ' + us.tipo + ')');
+        return O;
+      }
       if (z === 'suspender') {
-        if (us) us.suspendido = b.on ? 1 : 0;
+        if (us) {
+          us.suspendido = b.on ? 1 : 0;
+          if (!b.on) us.elim_pedida = 0;
+        }
         lg('admin', (b.on ? 'Suspendido: ' : 'Reactivado: ') + tel);
         return O;
       }
@@ -1342,7 +1404,13 @@
     if (p[0] === 'login') {
       const x = S.users.find((u) => u.telefono === tel);
       if (!x) return E('Teléfono o PIN incorrectos', 401);
-      if (x.suspendido) return E('Cuenta suspendida', 403);
+      if (x.suspendido)
+        return E(
+          x.elim_pedida
+            ? 'Tu cuenta está suspendida y se va a eliminar cuando un administrador la revise.'
+            : 'Cuenta suspendida',
+          403,
+        );
       if (x.bloq > now) return E('Demasiados intentos. Probá en unos minutos.', 429);
       if (String(b.pin || '') !== x.pin) {
         x.intentos++;
@@ -1619,58 +1687,17 @@
     }
     if (p[0] === 'cuenta-borrar') {
       if (String(b.pin || '') !== me.pin) return E('El PIN no es correcto', 401);
-      const id = me.id,
-        res = new Set(S.punt.map((x) => x.pedido_id));
-      S.pedidos
-        .filter((c) => c.cliente_id === id)
-        .forEach((c) => {
-          S.fotos = S.fotos.filter((f) => f.pid !== c.id);
-          S.post = S.post.filter((x) => x.pedido_id !== c.id);
-          S.inv = S.inv.filter((x) => x.p !== c.id);
-        });
-      S.pedidos
-        .filter((c) => c.cliente_id === id && res.has(c.id))
-        .forEach((c) =>
-          Object.assign(c, {
-            titulo: 'Pedido eliminado',
-            descripcion: '',
-            presupuesto: '',
-            oculta: 1,
-            estado: 'cancelada',
-          }),
-        );
-      S.pedidos = S.pedidos.filter((c) => c.cliente_id !== id || res.has(c.id));
-      S.post = S.post.filter((x) => x.trabajador_id !== id);
-      S.punt = S.punt.filter((x) => x.trabajador_id !== id);
-      S.inv = S.inv.filter((x) => x.w !== id);
-      delete S.pf[id];
-      S.tf = S.tf.filter((x) => x.usuario_id !== id);
-      S.avisos = S.avisos.filter((a) => a.usuario_id !== id);
-      S.users.forEach((u) => {
-        if (u.ref_por === id) u.ref_por = 0;
-      });
+      // No se borra nada: la cuenta queda suspendida hasta que un administrador la revise
+      me.suspendido = 1;
+      me.elim_pedida = Date.now();
       Object.keys(S.ses).forEach((t) => {
-        if (S.ses[t] === id) delete S.ses[t];
+        if (S.ses[t] === me.id) delete S.ses[t];
       });
-      Object.assign(me, {
-        nombre: 'Cuenta eliminada',
-        telefono: 'eliminada-' + id,
-        pin: 'x' + Math.random(),
-        rec: 'x' + Math.random(),
-        barrio: '',
-        rubros: '[]',
-        bio: '',
-        dni: '',
-        direccion: '',
-        mail: '',
-        suspendido: 1,
-        alertas_hasta: 0,
-        ref_cod: '',
-        ref_por: 0,
-        promos: 0,
+      lg('cuenta', 'Pidió eliminar su cuenta: queda suspendida hasta que un administrador la revise (#' + me.id + ', ' + me.tipo + ')');
+      return J({
+        ok: 1,
+        msg: 'Tu cuenta quedó suspendida y se va a eliminar por completo cuando un administrador la revise.',
       });
-      lg('cuenta', 'Cuenta eliminada por su dueño (#' + id + ', ' + me.tipo + ')');
-      return O;
     }
     if (p[0] === 'verificacion') {
       const dni = String(b.dni || '').replace(/\D/g, ''),
