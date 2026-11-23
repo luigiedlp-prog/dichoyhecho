@@ -198,7 +198,7 @@ const view = {
       ER = { abierta: 1, elegida: 2, hecha: 3, vencida: 4 };
     const HN = { vencida: 'Renová o eliminá' };
     const pl = (p, c) =>
-      `<div class="in"><div class="row2">${av(p.tid, p.fv, p.nombre, 'av s40')}<div><button class="lk2" data-a="pw" data-id="${p.tid}">${esc(p.nombre)}</button>${vb(p.ver)}${pb(p.pio, 1)} ${star(p.prom, p.n)}</div></div><p class="s">${esc(JSON.parse(p.rubros || '[]').map((k) => rbl(k, p.rubro_otro)).join(', '))}${p.barrio ? ' · ' + esc(p.barrio) : ''}${p.creado ? ' · Se postuló ' + fecH(p.creado) : ''}</p><p>${esc(p.mensaje)}</p>${p.estado === 'elegida' ? `<a class="btn wa full" href="${wa(p.tel)}" target="_blank" rel="noopener">WhatsApp a ${esc(p.nombre)}</a>${p.mail ? `<a class="btn ml full" href="mailto:${esc(p.mail)}">${MAILI} ${esc(p.mail)}</a>` : ''}` : c.estado === 'abierta' ? `<div class="ac"><button class="btn" data-a="pel" data-id="${p.id}">Elegir</button><button class="btn g" data-a="pde" data-id="${p.id}">Descartar</button></div>` : ''}</div>`;
+      `<div class="in"><div class="row2">${av(p.tid, p.fv, p.nombre, 'av s40')}<div><button class="lk2" data-a="pw" data-id="${p.tid}">${esc(p.nombre)}</button>${vb(p.ver)}${pb(p.pio, 1)}${db(p.don, 1)} ${star(p.prom, p.n)}</div></div><p class="s">${esc(JSON.parse(p.rubros || '[]').map((k) => rbl(k, p.rubro_otro)).join(', '))}${p.barrio ? ' · ' + esc(p.barrio) : ''}${p.creado ? ' · Se postuló ' + fecH(p.creado) : ''}</p><p>${esc(p.mensaje)}</p>${p.estado === 'elegida' ? `<a class="btn wa full" href="${wa(p.tel)}" target="_blank" rel="noopener">WhatsApp a ${esc(p.nombre)}</a>${p.mail ? `<a class="btn ml full" href="mailto:${esc(p.mail)}">${MAILI} ${esc(p.mail)}</a>` : ''}` : c.estado === 'abierta' ? `<div class="ac"><button class="btn" data-a="pel" data-id="${p.id}">Elegir</button><button class="btn g" data-a="pde" data-id="${p.id}">Descartar</button></div>` : ''}</div>`;
     const f = (c) => {
       const ch = c.post.find((p) => p.estado === 'elegida'),
         rs = c.post.filter((p) => p !== ch),
@@ -317,15 +317,20 @@ const view = {
     );
   },
   async loc() {
-    const l = await api('locales'),
+    const todos = await api('locales'),
+      emp = lt === 'emprendimiento',
+      l = todos.filter((x) => (x.tipo === 'emprendimiento') === emp),
       cs = [...new Set(l.map((x) => x.rubro))];
     if (fl && !cs.includes(fl)) fl = '';
     const sh = sv('<path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M9.5 20v-6h5v6"/>');
-    const f = (x) =>
-      `<article class="card"><div class="top"><span class="ic" style="background:#14b8a6;color:#0b1f1d">${sh}</span><div class="gw"><h3>${esc(x.nombre)}</h3><p class="s">${esc(x.rubro)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p></div><span class="bd elegida">${sv(X.chk)} Verificado</span></div>${x.direccion ? `<p class="s">${sv(X.pin)} ${esc(x.direccion)}</p>` : ''}${x.horario ? `<p class="s">${sv(X.clk)} ${esc(x.horario)}</p>` : ''}${x.descripcion ? `<p class="ds">${esc(x.descripcion)}</p>` : ''}<div class="ac">${x.whatsapp && x.telefono ? `<a class="btn wa" href="${wa(x.telefono)}" target="_blank" rel="noopener">WhatsApp</a>` : x.telefono ? `<a class="btn y" href="tel:+${x.telefono.startsWith('54') ? x.telefono : '54' + x.telefono}">Llamar</a>` : ''}${x.direccion ? `<a class="btn mp" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.direccion + ', Pergamino')}" target="_blank" rel="noopener">¿Cómo llegar?</a>` : ''}</div></article>`;
-    const sup = (window.CFG || {}).soporte;
+    const f = (x) => {
+      const fm = x.fm ? x.fm.split(',') : [];
+      return `<article class="card lcl"><div class="top">${x.fp ? `<img class="lcp" src="/api/lfoto/${esc(x.fp)}" data-a="zoom" data-u="/api/lfoto/${esc(x.fp)}" alt="Foto de ${esc(x.nombre)}" loading="lazy">` : `<span class="ic" style="background:#14b8a6;color:#0b1f1d">${sh}</span>`}<div class="gw"><h3>${esc(x.nombre)}</h3><p class="s">${esc(x.rubro)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p></div><span class="bd elegida">${sv(X.chk)} Verificado</span></div>${fm.length ? `<div class="lmg">${fm.map((i) => `<img src="/api/lfoto/${esc(i)}" data-a="zoom" data-u="/api/lfoto/${esc(i)}" alt="Foto de muestra de ${esc(x.nombre)}" loading="lazy">`).join('')}</div>` : ''}${x.direccion ? `<p class="s">${sv(X.pin)} ${esc(x.direccion)}</p>` : ''}${x.horario ? `<p class="s">${sv(X.clk)} ${esc(x.horario)}</p>` : ''}${x.descripcion ? `<p class="ds">${esc(x.descripcion)}</p>` : ''}<div class="ac">${x.whatsapp && x.telefono ? `<a class="btn wa" href="${wa(x.telefono)}" target="_blank" rel="noopener">WhatsApp</a>` : x.telefono ? `<a class="btn y" href="tel:+${x.telefono.startsWith('54') ? x.telefono : '54' + x.telefono}">Llamar</a>` : ''}${x.direccion ? `<a class="btn mp" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.direccion + ', Pergamino')}" target="_blank" rel="noopener">¿Cómo llegar?</a>` : ''}</div></article>`;
+    };
+    const nE = todos.filter((x) => x.tipo === 'emprendimiento').length;
     set(
-      '<h1 class="h1">Locales verificados</h1><p class="s">Pinturerías, ferreterías, sanitarios y más. Los revisamos nosotros.</p>' +
+      `<h1 class="h1">${emp ? 'Emprendimientos' : 'Locales verificados'}</h1><p class="s">${emp ? 'Emprendimientos de vecinos de Pergamino: comida, artesanías, estética y más. Los revisamos nosotros.' : 'Pinturerías, ferreterías, sanitarios y más. Los revisamos nosotros.'}</p>` +
+        `<div class="chp lts"><button class="${emp ? '' : 'on'}" data-a="lt" data-k="local">Locales ${todos.length - nE}</button><button class="${emp ? 'on' : ''}" data-a="lt" data-k="emprendimiento">Emprendimientos ${nE}</button></div>` +
         (cs.length
           ? `<div class="chp"><button class="${fl ? '' : 'on'}" data-a="fl" data-k="">Todos</button>${cs.map((r) => `<button class="${fl === r ? 'on' : ''}" data-a="fl" data-k="${esc(r)}">${esc(r)}</button>`).join('')}</div>`
           : '') +
@@ -335,12 +340,12 @@ const view = {
           .join('') ||
           empty(
             ILU.local,
-            'Todavía no hay locales',
-            'Estamos sumando los primeros. Pronto vas a encontrar acá dónde comprar tus materiales.',
+            emp ? 'Todavía no hay emprendimientos' : 'Todavía no hay locales',
+            emp
+              ? 'Estamos sumando los primeros. ¿Tenés uno? Pedí que lo agreguen desde acá abajo.'
+              : 'Estamos sumando los primeros. Pronto vas a encontrar acá dónde comprar tus materiales.',
           )) +
-        (sup
-          ? `<p class="s ctr">¿Tenés un local? <a href="https://wa.me/${sup}?text=${encodeURIComponent('Hola, quiero que verifiquen mi local en Dicho y Hecho.')}" target="_blank" rel="noopener">Pedí que lo verifiquen</a></p>`
-          : ''),
+        `<p class="s ctr">¿Tenés un local o un emprendimiento? <a data-a="sollocal" role="button" tabindex="0">Pedí que lo agreguen</a></p>`,
     );
   },
   async nov() {
@@ -405,6 +410,8 @@ const view = {
       tem: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
       leg: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6"/>',
       ref: '<path d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/>',
+      loc: '<path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M9.5 20v-6h5v6"/>',
+      don: '<path d="M12 21s-7.5-4.6-9.5-9.2C1.1 8.4 3 5 6.4 5c2 0 3.6 1.1 5.6 3.2C14 6.1 15.6 5 17.6 5 21 5 22.9 8.4 21.5 11.8 19.5 16.4 12 21 12 21z"/>',
       gui: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.8M12 17h.01"/>',
     };
     const rs = r.length
@@ -412,9 +419,9 @@ const view = {
       : '<span class="warn">Elegí tus rubros</span>';
     set(
       ios() +
-        `<div class="card"><div class="row2">${av(me.id, me.fv, me.nombre, 'av s64')}<div><h3>${esc(me.nombre)}${vb(me.ver)}${pb(me.pionero)}</h3><p class="s">${w ? 'Trabajador' : 'Cliente'}${me.barrio ? ' · ' + esc(me.barrio) : ''}</p>${me.pionero ? '<p class="s">Gracias por sumarte desde el principio.</p>' : ''}${w ? '<p>' + star(me.prom, me.n) + '</p>' : ''}</div></div>${w && pc < 100 ? `<div class="pgl"><span class="s"><b>Perfil al ${pc}%</b> · Falta: ${falta}</span></div><div class="pg"><i style="width:${pc}%"></i></div>` : ''}<input id="pf" type="file" accept="image/*" hidden><div class="brow"><button class="btn g" data-a="pfoto">${me.fv ? 'Cambiar foto' : 'Subir foto de perfil'}</button></div></div>
-    <div class="lst">${lr('button', 'data-a="edperfil"', I.dat, 'Mis datos' + (w ? ' y rubros' : ''), w ? rs : esc(me.barrio || ''))}${lr('button', 'data-a="pregunta"', I.ver, 'Pregunta de seguridad', me.pregunta ? 'Para recuperar tu PIN' : 'Falta cargarla')}${lr('button', 'data-a="verif"', I.ver, 'Verificá tu cuenta', me.ver ? 'Verificada' : 'Sumá DNI, dirección y mail')}${lr('button', 'data-a="refer"', I.ref, 'Invitá y ganá una potenciación', me.promos > 0 ? 'Tenés ' + me.promos + (me.promos > 1 ? ' ganadas' : ' ganada') : me.ref_prem >= me.ref_max ? 'Llegaste al máximo' : (me.ref_n % me.ref_de) + ' de ' + me.ref_de + ' invitados')}${w ? lr('button', 'data-a="alertas"', I.ale, 'Alertas inmediatas', me.alertas_act ? 'Hasta el ' + fec(me.alertas_hasta) : me.gratis > 0 ? 'Gratis' : '') : ''}${w ? lr('button', 'data-a="tab" data-t="pfotos"', I.fot, 'Fotos de mis trabajos', gal.length + '/12') + lr('button', 'data-a="pw" data-id="' + me.id + '"', I.res, 'Mis reseñas', me.prom ? '<span class="y">' + STAR + ' ' + me.prom + '</span> (' + me.n + ')' : 'Todavía sin reseñas') : ''}</div>
-    <div class="lst">${lr('button', 'data-a="tema"', I.tem, 'Apariencia', (TEMAS.find((x) => x[0] === temaPref()) || TEMAS[0])[1].split(' (')[0])}${lr('button', 'data-a="guiaver"', I.gui, 'Cómo funciona', '')}${lr('button', 'data-a="push"', I.av, 'Activar avisos', '')}${(window.CFG || {}).soporte ? lr('a', 'href="https://wa.me/' + CFG.soporte + '" target="_blank" rel="noopener"', I.wa, 'Ayuda por WhatsApp', '') : ''}${lr('a', 'href="legal.html#terminos" target="_blank" rel="noopener"', I.leg, 'Términos y privacidad', '')}</div>
+        `<div class="card"><div class="row2">${av(me.id, me.fv, me.nombre, 'av s64')}<div><h3>${esc(me.nombre)}${vb(me.ver)}${pb(me.pionero)}${db(me.donador)}</h3><p class="s">${w ? 'Trabajador' : 'Cliente'}${me.barrio ? ' · ' + esc(me.barrio) : ''}</p>${me.pionero ? '<p class="s">Gracias por sumarte desde el principio.</p>' : ''}${w ? '<p>' + star(me.prom, me.n) + '</p>' : ''}</div></div>${w && pc < 100 ? `<div class="pgl"><span class="s"><b>Perfil al ${pc}%</b> · Falta: ${falta}</span></div><div class="pg"><i style="width:${pc}%"></i></div>` : ''}<input id="pf" type="file" accept="image/*" hidden><div class="brow"><button class="btn g" data-a="pfoto">${me.fv ? 'Cambiar foto' : 'Subir foto de perfil'}</button></div></div>
+    <div class="lst">${lr('button', 'data-a="edperfil"', I.dat, 'Mis datos' + (w ? ' y rubros' : ''), w ? rs : esc(me.barrio || ''))}${lr('button', 'data-a="pregunta"', I.ver, 'Pregunta de seguridad', me.pregunta ? 'Para recuperar tu PIN' : 'Falta cargarla')}${lr('button', 'data-a="verif"', I.ver, 'Verificá tu cuenta', me.ver ? 'Verificada' : 'Sumá DNI, dirección y mail')}${lr('button', 'data-a="refer"', I.ref, 'Invitá y ganá una potenciación', me.promos > 0 ? 'Tenés ' + me.promos + (me.promos > 1 ? ' ganadas' : ' ganada') : me.ref_prem >= me.ref_max ? 'Llegaste al máximo' : (me.ref_n % me.ref_de) + ' de ' + me.ref_de + ' invitados')}${lr('button', 'data-a="sollocal"', I.loc, 'Solicitar agregar Local', '')}${w ? lr('button', 'data-a="alertas"', I.ale, 'Alertas inmediatas', me.alertas_act ? 'Hasta el ' + fec(me.alertas_hasta) : me.gratis > 0 ? 'Gratis' : '') : ''}${w ? lr('button', 'data-a="tab" data-t="pfotos"', I.fot, 'Fotos de mis trabajos', gal.length + '/12') + lr('button', 'data-a="pw" data-id="' + me.id + '"', I.res, 'Mis reseñas', me.prom ? '<span class="y">' + STAR + ' ' + me.prom + '</span> (' + me.n + ')' : 'Todavía sin reseñas') : ''}</div>
+    <div class="lst">${lr('button', 'data-a="tema"', I.tem, 'Apariencia', (TEMAS.find((x) => x[0] === temaPref()) || TEMAS[0])[1].split(' (')[0])}${lr('button', 'data-a="guiaver"', I.gui, 'Cómo funciona', '')}${lr('button', 'data-a="push"', I.av, 'Activar avisos', '')}${(window.CFG || {}).donar ? lr('button', 'data-a="donar"', I.don, 'Donar al proyecto', 'Voluntario') : ''}${(window.CFG || {}).soporte ? lr('a', 'href="https://wa.me/' + CFG.soporte + '" target="_blank" rel="noopener"', I.wa, 'Ayuda por WhatsApp', '') : ''}${lr('a', 'href="legal.html#terminos" target="_blank" rel="noopener"', I.leg, 'Términos y privacidad', '')}</div>
     <div class="lst">${lr('button', 'data-a="salirc"', '', 'Cerrar sesión', '', 'rd')}${lr('button', 'data-a="borrar"', '', 'Eliminar mi cuenta', '', 'rd')}</div>`,
     );
   },

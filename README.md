@@ -38,3 +38,17 @@ Todo es gratis: publicar, registrarse, ofrecer servicios, proponer y perfiles de
 ## Insignia Pionero (v85)
 
 Las primeras 50 cuentas que se registran (clientes y trabajadores) llevan la insignia "Pionero", de por vida. Se guarda en `usuarios.pionero` y la asigna el registro en la misma sentencia que inserta la cuenta (`PIONEROS` en `src/comun.js`, no hay carrera entre dos registros a la vez). Si una cuenta se elimina, libera su lugar y lo toma la próxima que se registre. Una base que ya existe necesita correr una vez `migracion-pionero.sql`. La portada y el registro muestran cuántos lugares quedan (viene en `GET /api/zona`, campo `pioneros`) y el cartel desaparece al llenarse. Al entrar por primera vez, cada Pionero ve un cartelito de bienvenida (una sola vez, `usuarios.pionero_visto`). Prueba: `node tools/probar-pionero.mjs`.
+
+## Emprendimientos y fotos de locales (v88)
+
+- `locales.tipo` es `local` o `emprendimiento` (rubros de emprendimientos en `REMP`, en `src/comun.js` y `public/datos.js`). Locales y Emprendimientos se ven en dos pestañas dentro de Locales.
+- Cada local o emprendimiento puede tener 1 foto de perfil y hasta 5 de muestra (tabla `local_fotos`, en D1, JPEG ya reducido por la app). Se cargan desde Gestión → Locales → Fotos. Se piden con clave al azar en `/api/lfoto/<id>.<clave>`.
+- Perfil → "Solicitar agregar Local": arma un mensaje con los datos y abre el WhatsApp de `CFG.soporte` (`public/config.js`, con código de país, ej. `5492477123456`). No guarda nada en la base.
+- Una base que ya existe necesita correr una vez `migracion-emprendimientos.sql`.
+- Prueba: `node tools/probar-emprendimientos.mjs`.
+
+## Donaciones (v88)
+
+Perfil → "Donar al proyecto" abre el link de Mercado Pago de `CFG.donar` (`public/config.js`) en otra pestaña. Es voluntario y no pasa por el Worker ni toca la base. Si `donar` queda vacío, el botón no se muestra.
+
+Insignia **Donador**: columna `usuarios.donador`. El link de Mercado Pago no avisa a la app, así que se marca a mano desde Gestión (Clientes o Trabajadores → "Marcar Donador"). Se ve en el perfil de la persona, en las tarjetas de trabajadores, en las propuestas y en los pedidos. Una base que ya existe necesita `migracion-emprendimientos.sql` (trae la columna).

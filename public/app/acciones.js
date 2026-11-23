@@ -285,7 +285,7 @@ const A = {
   async pw(d) {
     const w = await api('trabajadores/' + d.id),
       r = JSON.parse(w.rubros || '[]');
-    const h = `<div class="row2">${av(w.id, w.fv, w.nombre, 'av s64')}<div><b>${esc(w.nombre)}</b>${vb(w.ver)}${pb(w.pio)}<p class="s">${esc(r.map((k) => rbl(k, w.rubro_otro)).join(', '))}${w.barrio ? (r.length ? ' · ' : '') + esc(w.barrio) : ''}</p><p>${star(w.prom, w.n)}</p></div></div>${w.bio ? `<p>${esc(w.bio)}</p>` : ''}${w.fotos.length ? `<p class="s"><b>Sus trabajos</b></p><div class="gal">${w.fotos.map((i) => `<div><img src="/api/tfoto/${i}" data-a="zoom" data-u="/api/tfoto/${i}" alt="Foto de un trabajo" loading="lazy"></div>`).join('')}</div>` : ''}<div class="rs">${w.resenas.map((x) => `<div class="in"><span class="y">${STAR.repeat(x.e)}${STAR0.repeat(5 - x.e)}</span> <span class="s">${esc(x.quien)} · ${fec(x.f)}</span><p class="s">${esc(x.t)}</p>${x.c ? `<p>${esc(x.c)}</p>` : ''}${th(x.fo, 'rfoto')}</div>`).join('') || '<p class="s">Todavía no tiene reseñas.</p>'}</div>${d.inv && me.tipo === 'cliente' ? '<button class="btn" id="d_inv">Invitar a un pedido</button> ' : ''}${+d.id !== me.id ? '<button class="btn g" id="d_den">Denunciar</button>' : ''}`;
+    const h = `<div class="row2">${av(w.id, w.fv, w.nombre, 'av s64')}<div><b>${esc(w.nombre)}</b>${vb(w.ver)}${pb(w.pio)}${db(w.don)}<p class="s">${esc(r.map((k) => rbl(k, w.rubro_otro)).join(', '))}${w.barrio ? (r.length ? ' · ' : '') + esc(w.barrio) : ''}</p><p>${star(w.prom, w.n)}</p></div></div>${w.bio ? `<p>${esc(w.bio)}</p>` : ''}${w.fotos.length ? `<p class="s"><b>Sus trabajos</b></p><div class="gal">${w.fotos.map((i) => `<div><img src="/api/tfoto/${i}" data-a="zoom" data-u="/api/tfoto/${i}" alt="Foto de un trabajo" loading="lazy"></div>`).join('')}</div>` : ''}<div class="rs">${w.resenas.map((x) => `<div class="in"><span class="y">${STAR.repeat(x.e)}${STAR0.repeat(5 - x.e)}</span> <span class="s">${esc(x.quien)} · ${fec(x.f)}</span><p class="s">${esc(x.t)}</p>${x.c ? `<p>${esc(x.c)}</p>` : ''}${th(x.fo, 'rfoto')}</div>`).join('') || '<p class="s">Todavía no tiene reseñas.</p>'}</div>${d.inv && me.tipo === 'cliente' ? '<button class="btn" id="d_inv">Invitar a un pedido</button> ' : ''}${+d.id !== me.id ? '<button class="btn g" id="d_den">Denunciar</button>' : ''}`;
     const v = await dlg({
       t: 'Perfil del trabajador',
       h,
@@ -304,6 +304,58 @@ const A = {
   fl: (d) => {
     fl = d.k;
     view.loc();
+  },
+  // Donación voluntaria: abre el link de Mercado Pago en otra pestaña
+  donar: () => {
+    const u = (window.CFG || {}).donar;
+    if (u && !window.open(u, '_blank', 'noopener')) location.href = u;
+  },
+  lt: (d) => {
+    lt = d.k === 'emprendimiento' ? 'emprendimiento' : 'local';
+    fl = '';
+    view.loc();
+  },
+  // Pedir que agreguen un local o emprendimiento: arma el mensaje y abre el WhatsApp de Modus Grid
+  async sollocal() {
+    const num = String((window.CFG || {}).soporte || '').replace(/\D/g, '');
+    if (!num) return toast('Todavía no está configurado el WhatsApp de contacto');
+    let url = '';
+    const r = await dlg({
+      t: 'Solicitar agregar Local',
+      p: 'Completá los datos y te abrimos WhatsApp con el mensaje armado. Lo revisamos nosotros antes de publicarlo.',
+      f: [
+        {
+          id: 'tipo',
+          lb: '¿Qué es?',
+          opts: [
+            ['local', 'Local (ferretería, pinturería…)'],
+            ['emprendimiento', 'Emprendimiento'],
+          ],
+          val: lt,
+        },
+        { id: 'nombre', lb: 'Nombre', max: 80, ph: 'Ej: Ferretería López' },
+        { id: 'rubro', lb: 'Rubro o qué ofrece', max: 60, ph: 'Ej: Ferretería, tortas, ropa' },
+        { id: 'direccion', lb: 'Dirección o barrio', max: 100, ph: 'Ej: Av. Rivadavia 1234' },
+        { id: 'telefono', lb: 'Teléfono del negocio (opcional)', type: 'tel', mode: 'numeric', max: 15 },
+      ],
+      ok: 'Enviar por WhatsApp',
+      v: (x) => {
+        if (x.nombre.length < 2) return 'Poné el nombre.';
+        if (x.rubro.length < 2) return 'Contanos el rubro o qué ofrece.';
+        const t = x.tipo === 'emprendimiento' ? 'emprendimiento' : 'local';
+        const txt =
+          `Hola, quiero que agreguen mi ${t} a Dicho y Hecho.\n` +
+          `Nombre: ${x.nombre}\nRubro: ${x.rubro}\n` +
+          (x.direccion ? `Dirección: ${x.direccion}\n` : '') +
+          (x.telefono ? `Teléfono: ${x.telefono}\n` : '') +
+          `Mi cuenta: ${me.nombre} (${me.telefono})`;
+        url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
+        // se abre acá adentro, en el mismo toque, para que el celular no bloquee la ventana
+        if (!window.open(url, '_blank', 'noopener')) location.href = url;
+        return '';
+      },
+    });
+    if (r) toast('Listo, te abrimos WhatsApp');
   },
   tadd: () => $('#tf').click(),
   async tsubir() {

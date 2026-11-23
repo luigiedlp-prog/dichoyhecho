@@ -58,6 +58,15 @@ const pb = (v, mini) =>
       ? `<span class="pio mini" role="img" aria-label="Pionero" title="Pionero: apoyó el proyecto en sus inicios">${PIOI}</span>`
       : `<span class="pio" title="Pionero: apoyó el proyecto en sus inicios">${PIOI}Pionero</span>`
     : '';
+const DONI =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1.1 8.4 3 5 6.4 5c2 0 3.6 1.1 5.6 3.2C14 6.1 15.6 5 17.6 5 21 5 22.9 8.4 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg>';
+// Insignia "Donador" (la marca Gestión a mano). mini = solo el ícono, para lugares chicos.
+const db = (v, mini) =>
+  v
+    ? mini
+      ? `<span class="don mini" role="img" aria-label="Donador" title="Donador: ayudó a sostener el proyecto">${DONI}</span>`
+      : `<span class="don" title="Donador: ayudó a sostener el proyecto">${DONI}Donador</span>`
+    : '';
 // Cartelito de bienvenida para las cuentas Pionero: sale una sola vez (queda guardado en la cuenta)
 async function pionAviso() {
   window.__pioVisto = 1;

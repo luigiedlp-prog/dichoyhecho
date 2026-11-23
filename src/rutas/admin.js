@@ -1,4 +1,4 @@
-import { DAY, E, J, MIN, PIN, PURGA, REF_MAX, RLOC, aj, borrarCuentaDefinitivo, iguales, limpiarBloq, log, mk } from '../comun.js';
+import { DAY, E, J, MIN, PIN, PURGA, REF_MAX, REMP, RLOC, LOC_TIPOS, aj, borrarCuentaDefinitivo, iguales, limpiarBloq, log, mk, rnd } from '../comun.js';
 import { avisar } from '../avisos.js';
 
 export default async function admin(C) {
@@ -39,7 +39,7 @@ export default async function admin(C) {
       if (z === 'trabajadores')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.rubro_otro,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.rubro_otro,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -52,7 +52,7 @@ export default async function admin(C) {
       if (z === 'clientes')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -163,13 +163,15 @@ export default async function admin(C) {
           ),
         );
       }
+      if (z === 'local-fotos')
+        return J(await all('SELECT id,rol,k FROM local_fotos WHERE local_id=? ORDER BY id', +sp.get('id')));
       if (z === 'locales') {
         await q("UPDATE locales SET codigo=lower(hex(randomblob(3))) WHERE codigo=''")
           .run()
           .catch(() => {}); // código del QR de cada local
         return J(
           await all(
-            "SELECT l.id,l.nombre,l.rubro,l.direccion,l.barrio,l.telefono,l.whatsapp,l.horario,l.descripcion,l.activo,l.codigo,COALESCE((SELECT SUM(visitas) FROM origen_dias WHERE local_id=l.id),0) visitas,(SELECT COUNT(*) FROM usuarios WHERE origen=l.id) registros,(SELECT COUNT(*) FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE u.origen=l.id) pedidos FROM locales l WHERE (?='' OR l.nombre LIKE ? OR l.direccion LIKE ? OR l.barrio LIKE ? OR l.telefono LIKE ? OR l.rubro LIKE ?) AND (?=0 OR (l.rubro,l.nombre,l.id)>(?,?,?)) ORDER BY l.rubro,l.nombre,l.id LIMIT 100",
+            "SELECT l.id,l.nombre,l.rubro,l.direccion,l.barrio,l.telefono,l.whatsapp,l.horario,l.descripcion,l.activo,l.codigo,l.tipo,(SELECT id||'.'||k FROM local_fotos WHERE local_id=l.id AND rol='perfil' ORDER BY id DESC LIMIT 1) fp,(SELECT group_concat(id||'.'||k) FROM (SELECT id,k FROM local_fotos WHERE local_id=l.id AND rol='muestra' ORDER BY id LIMIT 5)) fm,COALESCE((SELECT SUM(visitas) FROM origen_dias WHERE local_id=l.id),0) visitas,(SELECT COUNT(*) FROM usuarios WHERE origen=l.id) registros,(SELECT COUNT(*) FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE u.origen=l.id) pedidos FROM locales l WHERE (?='' OR l.nombre LIKE ? OR l.direccion LIKE ? OR l.barrio LIKE ? OR l.telefono LIKE ? OR l.rubro LIKE ?) AND (?=0 OR (l.rubro,l.nombre,l.id)>(?,?,?)) ORDER BY l.rubro,l.nombre,l.id LIMIT 100",
             qs,
             lk,
             lk,
@@ -320,7 +322,7 @@ export default async function admin(C) {
       }
       return E('No existe', 404);
     }
-    if ((z === 'suspender' || z === 'reset-pin' || z === 'eliminar-cuenta') && /^eliminada-/.test(String(b.telefono || '')))
+    if ((z === 'suspender' || z === 'donador' || z === 'reset-pin' || z === 'eliminar-cuenta') && /^eliminada-/.test(String(b.telefono || '')))
       return E('Esa cuenta fue eliminada por su dueño');
     if (z === 'reset-pin') {
       if (!PIN.test(b.pin || '')) return E('El PIN tiene 6 números');
@@ -351,6 +353,13 @@ export default async function admin(C) {
       await log(D, 'admin', 'Cuenta eliminada por completo (#' + x.id + ', ' + x.tipo + ')');
       return J({ ok: 1 });
     }
+    // Insignia Donador: la marca Gestión a mano cuando llega la donación (el link de Mercado Pago no avisa a la app)
+    if (z === 'donador') {
+      const r = await q('UPDATE usuarios SET donador=? WHERE telefono=?', b.on ? 1 : 0, tel).run();
+      if (!r.meta.changes) return E('No existe esa cuenta', 404);
+      await log(D, 'admin', (b.on ? 'Donador marcado: ' : 'Donador quitado: ') + tel);
+      return J({ ok: 1 });
+    }
     if (z === 'suspender') {
       await q('UPDATE usuarios SET suspendido=?,elim_pedida=CASE WHEN ?=0 THEN 0 ELSE elim_pedida END WHERE telefono=?', b.on ? 1 : 0, b.on ? 1 : 0, tel).run();
       await log(D, 'admin', (b.on ? 'Suspendido: ' : 'Reactivado: ') + tel);
@@ -369,7 +378,9 @@ export default async function admin(C) {
     }
     if (z === 'local' || z === 'local-editar') {
       const n = String(b.nombre || '').trim();
-      if (n.length < 2 || !RLOC.includes(b.rubro)) return E('Poné el nombre y elegí el rubro');
+      const tp = LOC_TIPOS.includes(b.tipo) ? b.tipo : 'local';
+      if (n.length < 2 || !(tp === 'local' ? RLOC : REMP).includes(b.rubro))
+        return E('Poné el nombre y elegí el rubro');
       const v = [
         n.slice(0, 80),
         b.rubro,
@@ -384,20 +395,51 @@ export default async function admin(C) {
       ];
       if (z === 'local')
         await q(
-          'INSERT INTO locales(nombre,rubro,direccion,barrio,telefono,whatsapp,horario,descripcion,creado) VALUES(?,?,?,?,?,?,?,?,?)',
+          'INSERT INTO locales(nombre,rubro,direccion,barrio,telefono,whatsapp,horario,descripcion,tipo,creado) VALUES(?,?,?,?,?,?,?,?,?,?)',
           ...v,
+          tp,
           now,
         ).run();
       else
         await q(
-          'UPDATE locales SET nombre=?,rubro=?,direccion=?,barrio=?,telefono=?,whatsapp=?,horario=?,descripcion=? WHERE id=?',
+          'UPDATE locales SET nombre=?,rubro=?,direccion=?,barrio=?,telefono=?,whatsapp=?,horario=?,descripcion=?,tipo=? WHERE id=?',
           ...v,
+          tp,
           +b.id,
         ).run();
       await log(D, 'admin', (z === 'local' ? 'Local nuevo: ' : 'Local editado: ') + n.slice(0, 60));
       return J({ ok: 1 });
     }
+    // Fotos de un local o emprendimiento: 1 de perfil (reemplaza a la anterior) y hasta 5 de muestra
+    if (z === 'local-foto') {
+      const lid = +b.id,
+        f = b.foto,
+        rol = b.rol === 'perfil' ? 'perfil' : 'muestra';
+      if (!(await q('SELECT 1 x FROM locales WHERE id=?', lid).first())) return E('No existe el local', 404);
+      if (typeof f !== 'string' || !f.startsWith('data:image/jpeg;base64,') || f.length > 250000)
+        return E('La foto no es válida o es muy pesada');
+      if (rol === 'perfil') await q("DELETE FROM local_fotos WHERE local_id=? AND rol='perfil'", lid).run();
+      else if (
+        (await q("SELECT COUNT(*) n FROM local_fotos WHERE local_id=? AND rol='muestra'", lid).first()).n >= 5
+      )
+        return E('Ya tiene las 5 fotos de muestra. Borrá alguna para subir otra.');
+      await q(
+        'INSERT INTO local_fotos(local_id,rol,img,k,creado) VALUES(?,?,?,?,?)',
+        lid,
+        rol,
+        f.slice(23),
+        rnd(8),
+        now,
+      ).run();
+      await log(D, 'admin', 'Foto de ' + rol + ' en local #' + lid);
+      return J({ ok: 1 });
+    }
+    if (z === 'local-foto-borrar') {
+      await q('DELETE FROM local_fotos WHERE id=?', +b.id).run();
+      return J({ ok: 1 });
+    }
     if (z === 'local-borrar') {
+      await q('DELETE FROM local_fotos WHERE local_id=?', b.id).run();
       await q('DELETE FROM locales WHERE id=?', b.id).run();
       await q('DELETE FROM origen_dias WHERE local_id=?', b.id).run();
       await q('UPDATE usuarios SET origen=0 WHERE origen=?', b.id).run();

@@ -269,6 +269,7 @@ export default async function publicas(C) {
     pfoto: ['perfil_fotos', 'usuario_id'],
     rfoto: ['resena_fotos', 'id'],
     tfoto: ['trabajos_fotos', 'id'],
+    lfoto: ['local_fotos', 'id'],
   };
   if (IMG[p[0]]) {
     const [i, kk] = p[0] === 'pfoto' ? [p[1], u.searchParams.get('v') || ''] : String(p[1]).split('.');

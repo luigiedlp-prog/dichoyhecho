@@ -6,13 +6,13 @@ export default async function directorio(C) {
     return J(
       (
         await q(
-          'SELECT id,nombre,rubro,direccion,barrio,telefono,whatsapp,horario,descripcion FROM locales WHERE activo=1 ORDER BY rubro,nombre LIMIT 200',
+          "SELECT l.id,l.nombre,l.rubro,l.tipo,l.direccion,l.barrio,l.telefono,l.whatsapp,l.horario,l.descripcion,(SELECT id||'.'||k FROM local_fotos WHERE local_id=l.id AND rol='perfil' ORDER BY id DESC LIMIT 1) fp,(SELECT group_concat(id||'.'||k) FROM (SELECT id,k FROM local_fotos WHERE local_id=l.id AND rol='muestra' ORDER BY id LIMIT 5)) fm FROM locales l WHERE l.activo=1 ORDER BY l.tipo,l.rubro,l.nombre LIMIT 200",
         ).all()
       ).results,
     );
   if (p[0] === 'trabajadores' && p[1] && m === 'GET') {
     const w = await q(
-      "SELECT u.id,u.nombre,u.barrio,u.rubros,u.rubro_otro,u.bio,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n FROM usuarios u WHERE u.id=? AND u.tipo='trabajador' AND u.suspendido=0",
+      "SELECT u.id,u.nombre,u.barrio,u.rubros,u.rubro_otro,u.bio,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,u.donador don,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n FROM usuarios u WHERE u.id=? AND u.tipo='trabajador' AND u.suspendido=0",
       +p[1],
     ).first();
     if (!w) return E('No existe', 404);
@@ -63,7 +63,7 @@ export default async function directorio(C) {
       pag = Math.min(Math.max(1, Math.floor(+sp.get('pag')) || 1), pags);
     const items = (
       await q(
-        "SELECT * FROM (SELECT u.id,u.nombre,u.barrio,u.rubros,u.rubro_otro,SUBSTR(u.bio,1,140) bio,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n FROM usuarios u WHERE " +
+        "SELECT * FROM (SELECT u.id,u.nombre,u.barrio,u.rubros,u.rubro_otro,SUBSTR(u.bio,1,140) bio,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,u.donador don,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n FROM usuarios u WHERE " +
           W +
           ') t WHERE (?=0 OR COALESCE(prom,0)>=?) ORDER BY ' +
           ORD +

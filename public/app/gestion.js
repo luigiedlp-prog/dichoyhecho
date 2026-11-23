@@ -117,7 +117,7 @@ const gconf = (d) =>
   })[d.g];
 const gb = (a, t, x = '') => `<button class="btn g" data-g="${a}" ${x}>${t}</button>`;
 const gusr = (x, det) =>
-  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.elim_pedida ? ' <span class="bd cancelada">Pidió eliminar su cuenta</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}${x.elim_pedida && !/^eliminada-/.test(x.telefono) ? gb('elimdef', 'Eliminar por completo', `data-t="${esc(x.telefono)}"`) : ''}</div></div>`;
+  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${x.donador ? ' <span class="bd dest">Donador</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.elim_pedida ? ' <span class="bd cancelada">Pidió eliminar su cuenta</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('donador', x.donador ? 'Quitar Donador' : 'Marcar Donador', `data-t="${esc(x.telefono)}" data-on="${x.donador ? 0 : 1}"`)}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}${x.elim_pedida && !/^eliminada-/.test(x.telefono) ? gb('elimdef', 'Eliminar por completo', `data-t="${esc(x.telefono)}"`) : ''}</div></div>`;
 const gnorm = (s) =>
   String(s ?? '')
     .toLowerCase()
@@ -151,8 +151,17 @@ const GFD = () => ({
 });
 GF = GFD();
 const LF = (x) => [
+  {
+    id: 'tipo',
+    lb: 'Tipo',
+    opts: [
+      ['local', 'Local verificado'],
+      ['emprendimiento', 'Emprendimiento'],
+    ],
+    val: x.tipo === 'emprendimiento' ? 'emprendimiento' : 'local',
+  },
   { id: 'nombre', lb: 'Nombre', max: 80, val: x.nombre },
-  { id: 'rubro', lb: 'Rubro', opts: RLOC.map((r) => [r, r]), val: x.rubro },
+  { id: 'rubro', lb: 'Rubro', opts: (x.tipo === 'emprendimiento' ? REMP : RLOC).map((r) => [r, r]), val: x.rubro },
   { id: 'direccion', lb: 'Dirección', max: 100, ph: 'Ej: Av. Rivadavia 1234', val: x.direccion },
   { id: 'barrio', lb: 'Barrio', max: 40, val: x.barrio },
   { id: 'telefono', lb: 'Teléfono con código de área', type: 'tel', mode: 'numeric', max: 15, val: x.telefono },
@@ -168,6 +177,78 @@ const LF = (x) => [
   { id: 'horario', lb: 'Horario', max: 100, ph: 'Lun a vie 8 a 18', val: x.horario },
   { id: 'descripcion', lb: 'Descripción', area: 1, max: 300, val: x.descripcion },
 ];
+// al cambiar el tipo, el rubro muestra la lista que le corresponde
+const LFON = (m) => {
+  const t = m.querySelector('#d_tipo'),
+    r = m.querySelector('#d_rubro');
+  if (!t || !r) return;
+  t.onchange = () => {
+    const L = t.value === 'emprendimiento' ? REMP : RLOC,
+      cur = r.value;
+    r.innerHTML = L.map((x) => `<option value="${esc(x)}"${x === cur ? ' selected' : ''}>${esc(x)}</option>`).join('');
+  };
+};
+// Fotos de un local: una de perfil y hasta cinco de muestra
+async function LFOTOS(c, k) {
+  await dlg({
+    t: 'Fotos de ' + c.nombre,
+    p: 'Una foto de perfil y hasta 5 de muestra.',
+    h: '<div class="lfg" id="lf_box"><p class="s">Cargando…</p></div><input id="lf_p" type="file" accept="image/*" hidden><input id="lf_m" type="file" accept="image/*" multiple hidden>',
+    solo: 1,
+    v: () => '',
+    on: (m) => {
+      const box = m.querySelector('#lf_box');
+      const pinta = async () => {
+        let fs = [];
+        try {
+          fs = await api('admin/local-fotos?id=' + c.id, null, k);
+        } catch (e) {}
+        const pf = fs.filter((x) => x.rol === 'perfil').slice(-1),
+          mu = fs.filter((x) => x.rol === 'muestra').slice(0, 5),
+          cel = (x) =>
+            `<div><img src="/api/lfoto/${x.id}.${x.k}" alt="Foto"><button type="button" data-fd="${x.id}" aria-label="Borrar esta foto">×</button></div>`;
+        box.innerHTML = `<h4>Foto de perfil</h4><div class="gal">${pf.map(cel).join('')}</div><button class="btn g full" type="button" id="lf_bp">${pf.length ? 'Cambiar foto de perfil' : 'Subir foto de perfil'}</button><h4>Fotos de muestra (${mu.length}/5)</h4><div class="gal">${mu.map(cel).join('')}</div><button class="btn g full" type="button" id="lf_bm"${mu.length >= 5 ? ' disabled' : ''}>Agregar fotos de muestra</button>`;
+        box.querySelector('#lf_bp').onclick = () => m.querySelector('#lf_p').click();
+        box.querySelector('#lf_bm').onclick = () => m.querySelector('#lf_m').click();
+        box.querySelectorAll('[data-fd]').forEach(
+          (b) =>
+            (b.onclick = async () => {
+              await api('admin/local-foto-borrar', { id: +b.dataset.fd }, k);
+              pinta();
+            }),
+        );
+      };
+      m.querySelector('#lf_p').onchange = async (ev) => {
+        const f = ev.target.files[0];
+        ev.target.value = '';
+        if (!f) return;
+        toast('Subiendo…');
+        try {
+          await api('admin/local-foto', { id: c.id, rol: 'perfil', foto: await compSq(f) }, k);
+        } catch (e) {
+          toast(e.message || 'No se pudo subir');
+        }
+        pinta();
+      };
+      m.querySelector('#lf_m').onchange = async (ev) => {
+        const fs = [...ev.target.files].slice(0, 5);
+        ev.target.value = '';
+        if (!fs.length) return;
+        toast('Subiendo…');
+        for (const f of fs) {
+          try {
+            await api('admin/local-foto', { id: c.id, rol: 'muestra', foto: await comp(f) }, k);
+          } catch (e) {
+            toast(e.message || 'No se pudo subir');
+            break;
+          }
+        }
+        pinta();
+      };
+      pinta();
+    },
+  });
+}
 const DL = 'DLMMJVS';
 const bars = (arr, dias) => {
   const mx = Math.max(1, ...arr);
@@ -527,6 +608,8 @@ function gh() {
           gmatch(x, ['nombre', 'direccion', 'barrio', 'telefono', 'rubro']) &&
           (!f.r || x.rubro === f.r) &&
           (!f.f ||
+            (f.f === 'loc' && x.tipo !== 'emprendimiento') ||
+            (f.f === 'emp' && x.tipo === 'emprendimiento') ||
             (f.f === 'vis' && x.activo) ||
             (f.f === 'ocu' && !x.activo) ||
             (f.f === 'qr' && (x.visitas || x.registros))),
@@ -536,7 +619,7 @@ function gh() {
         r
           .map(
             (x) =>
-              `<div class="card"><b>${esc(x.nombre)}</b>${x.activo ? '' : ' <span class="bd cancelada">Oculto</span>'}<p class="s">${esc(x.rubro)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.direccion ? `<p class="s">${sv(X.pin)} ${esc(x.direccion)}</p>` : ''}${x.horario ? `<p class="s">${sv(X.clk)} ${esc(x.horario)}</p>` : ''}<p class="s">${x.telefono ? esc(x.telefono) + (x.whatsapp ? ' · WhatsApp' : '') : 'Sin teléfono'}</p><p class="s">QR: ${x.visitas} visitas · ${x.registros} registros · ${x.pedidos} pedidos</p><div class="ac">${gb('local-qr', 'QR', `data-id="${x.id}"`)}${gb('local-editar', 'Editar', `data-id="${x.id}"`)}${gb('local-ocultar', x.activo ? 'Ocultar' : 'Mostrar', `data-id="${x.id}" data-v="${x.activo ? 1 : 0}"`)}${gb('local-borrar', 'Borrar', `data-id="${x.id}"`)}</div></div>`,
+              `<div class="card"><b>${esc(x.nombre)}</b>${x.activo ? '' : ' <span class="bd cancelada">Oculto</span>'}<p class="s">${x.tipo === 'emprendimiento' ? 'Emprendimiento · ' : ''}${esc(x.rubro)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p><p class="s">Fotos: ${x.fp ? '1 de perfil' : 'sin perfil'} · ${x.fm ? x.fm.split(',').length : 0}/5 de muestra</p>${x.direccion ? `<p class="s">${sv(X.pin)} ${esc(x.direccion)}</p>` : ''}${x.horario ? `<p class="s">${sv(X.clk)} ${esc(x.horario)}</p>` : ''}<p class="s">${x.telefono ? esc(x.telefono) + (x.whatsapp ? ' · WhatsApp' : '') : 'Sin teléfono'}</p><p class="s">QR: ${x.visitas} visitas · ${x.registros} registros · ${x.pedidos} pedidos</p><div class="ac">${gb('local-fotos', 'Fotos', `data-id="${x.id}"`)}${gb('local-qr', 'QR', `data-id="${x.id}"`)}${gb('local-editar', 'Editar', `data-id="${x.id}"`)}${gb('local-ocultar', x.activo ? 'Ocultar' : 'Mostrar', `data-id="${x.id}" data-v="${x.activo ? 1 : 0}"`)}${gb('local-borrar', 'Borrar', `data-id="${x.id}"`)}</div></div>`,
           )
           .join('') || '<p class="s">Sin resultados.</p>'
       );
@@ -546,13 +629,15 @@ function gh() {
       gchips(
         [
           ['', 'Todos', L.length],
+          ['loc', 'Locales', L.filter((x) => x.tipo !== 'emprendimiento').length],
+          ['emp', 'Emprendimientos', L.filter((x) => x.tipo === 'emprendimiento').length],
           ['vis', 'Visibles', L.filter((x) => x.activo).length],
           ['ocu', 'Ocultos', L.filter((x) => !x.activo).length],
           ['qr', 'Con movimiento de QR', L.filter((x) => x.visitas || x.registros).length],
         ],
         f.f,
       ) +
-      `<div class="fsel">${gsel('r', [['', 'Todos los rubros'], ...RLOC.map((x) => [x, x])], f.r, 'Rubro')}</div>`;
+      `<div class="fsel">${gsel('r', [['', 'Todos los rubros'], ...[...new Set([...RLOC, ...REMP])].map((x) => [x, x])], f.r, 'Rubro')}</div>`;
   } else {
     const a = GD,
       fo = a.fotos,
@@ -732,14 +817,20 @@ document.addEventListener('click', (e) => {
       await api('admin/reset-pin', { telefono: d.t, pin: r.p }, k);
     } else if (d.g === 'local-nuevo') {
       const r = await dlg({
-        t: 'Nuevo local verificado',
+        t: 'Nuevo local o emprendimiento',
         f: LF({}),
+        on: LFON,
         ok: 'Guardar',
         v: (x) => (x.nombre.length < 2 ? 'Poné el nombre.' : ''),
       });
       if (!r) return;
       const { e: _e, files: _f, rb: _r, ...x } = r;
       await api('admin/local', { ...x, whatsapp: !!x.whatsapp }, k);
+    } else if (d.g === 'local-fotos') {
+      const c = GD.find((y) => y.id == d.id);
+      if (!c) return;
+      await LFOTOS(c, k);
+      return gestion();
     } else if (d.g === 'local-qr') {
       const c = GD.find((y) => y.id == d.id);
       if (!c || !c.codigo) return;
@@ -781,6 +872,7 @@ document.addEventListener('click', (e) => {
       const r = await dlg({
         t: 'Editar local',
         f: LF(c),
+        on: LFON,
         ok: 'Guardar cambios',
         v: (x) => (x.nombre.length < 2 ? 'Poné el nombre.' : ''),
       });
@@ -888,6 +980,7 @@ document.addEventListener('click', (e) => {
       if (!r) return;
       await api('admin/' + d.g, { id: +d.id, t: d.t }, k);
     } else if (d.g === 'susp') await api('admin/suspender', { telefono: d.t, on: +d.on }, k);
+    else if (d.g === 'donador') await api('admin/donador', { telefono: d.t, on: +d.on }, k);
     else if (d.g === 'elimdef') await api('admin/eliminar-cuenta', { telefono: d.t }, k);
     else await api('admin/' + d.g, { id: +d.id }, k);
     toast('Listo');

@@ -36,6 +36,17 @@ export const RLOC = [
   'Vidrierías',
   'Otros',
 ];
+export const REMP = [
+  'Comidas y viandas',
+  'Panadería y pastelería',
+  'Indumentaria y accesorios',
+  'Artesanías y regalos',
+  'Belleza y estética',
+  'Hogar y decoración',
+  'Servicios',
+  'Otros',
+];
+export const LOC_TIPOS = ['local', 'emprendimiento'];
 export const DAY = 864e5,
   MIN = 6e4,
   PIN = R.PIN;
@@ -258,7 +269,7 @@ export async function borrarCuentaDefinitivo(D, id) {
     ),
     D.prepare('UPDATE usuarios SET ref_por=0 WHERE ref_por=?').bind(id),
     D.prepare(
-      "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',rubro_otro='',bio='',dni='',direccion='',mail='',suspendido=1,elim_pedida=0,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
+      "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',rubro_otro='',bio='',dni='',direccion='',mail='',suspendido=1,elim_pedida=0,donador=0,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
     ).bind('eliminada-' + id, await mk(rnd(12)), await mk(rnd(12)), id),
   ]);
 }
