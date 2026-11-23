@@ -1,4 +1,4 @@
-import { DAY, DEMORA, E, J, PAG, RUBROS, aj, faltan, rnd } from '../comun.js';
+import { DAY, DEMORA, E, J, PAG, RUBROS, aj, faltan, rnd, rubroOtro } from '../comun.js';
 import { avisar, notificar } from '../avisos.js';
 
 export default async function pedidos(C) {
@@ -26,7 +26,7 @@ export default async function pedidos(C) {
       pag = Math.min(Math.max(1, Math.floor(+u.searchParams.get('pag')) || 1), pags);
     const items = (
       await q(
-        "SELECT c.id,c.titulo,c.rubro,c.descripcion,c.barrio,c.presupuesto,c.creado,(SELECT group_concat(id||'.'||k) FROM pedido_fotos WHERE pedido_id=c.id) fotos,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') n,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND trabajador_id=?) ya,(SELECT COUNT(*) FROM invitaciones WHERE pedido_id=c.id AND trabajador_id=?) inv,(c.rubro IN (SELECT value FROM json_each(?))) suyo,(c.dest_hasta>?) dest,c.cliente_id cid,(SELECT nombre FROM usuarios WHERE id=c.cliente_id) cn,(SELECT k FROM perfil_fotos WHERE usuario_id=c.cliente_id) cfv,COALESCE((SELECT 1 FROM usuarios WHERE id=c.cliente_id AND dni!='' AND direccion!='' AND mail!=''),0) ver,(SELECT pionero FROM usuarios WHERE id=c.cliente_id) pio FROM pedidos c WHERE " +
+        "SELECT c.id,c.titulo,c.rubro,c.rubro_otro,c.descripcion,c.barrio,c.presupuesto,c.creado,(SELECT group_concat(id||'.'||k) FROM pedido_fotos WHERE pedido_id=c.id) fotos,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') n,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND trabajador_id=?) ya,(SELECT COUNT(*) FROM invitaciones WHERE pedido_id=c.id AND trabajador_id=?) inv,(c.rubro IN (SELECT value FROM json_each(?))) suyo,(c.dest_hasta>?) dest,c.cliente_id cid,(SELECT nombre FROM usuarios WHERE id=c.cliente_id) cn,(SELECT k FROM perfil_fotos WHERE usuario_id=c.cliente_id) cfv,COALESCE((SELECT 1 FROM usuarios WHERE id=c.cliente_id AND dni!='' AND direccion!='' AND mail!=''),0) ver,(SELECT pionero FROM usuarios WHERE id=c.cliente_id) pio FROM pedidos c WHERE " +
           W +
           ' ORDER BY (c.dest_hasta>?) DESC,(CASE WHEN c.dest_hasta>? THEN c.dest_desde ELSE 0 END) DESC,' +
           TAIL +
@@ -66,10 +66,11 @@ export default async function pedidos(C) {
     const h = await q('SELECT COUNT(*) n FROM pedidos WHERE cliente_id=? AND creado>?', me.id, now - DAY).first();
     if (h.n >= 5) return E('Llegaste al límite de 5 publicaciones por día');
     const ins = await q(
-      'INSERT INTO pedidos(cliente_id,titulo,rubro,descripcion,barrio,presupuesto,vence,creado,aviso_en,aviso_pend) VALUES(?,?,?,?,?,?,?,?,?,1)',
+      'INSERT INTO pedidos(cliente_id,titulo,rubro,rubro_otro,descripcion,barrio,presupuesto,vence,creado,aviso_en,aviso_pend) VALUES(?,?,?,?,?,?,?,?,?,?,1)',
       me.id,
       t.slice(0, 80),
       b.rubro,
+      rubroOtro(b.rubro, b.rubro_otro),
       String(b.descripcion || '').slice(0, 1000),
       String(b.barrio || '').slice(0, 40),
       String(b.presupuesto || '')
@@ -84,7 +85,7 @@ export default async function pedidos(C) {
     ctx.waitUntil(
       notificar(
         env,
-        { id: ins.meta.last_row_id, rubro: b.rubro, titulo: t, dest_hasta: 0, aviso_en: now + DEMORA, aviso_pend: 1 },
+        { id: ins.meta.last_row_id, rubro: b.rubro, rubro_otro: rubroOtro(b.rubro, b.rubro_otro), titulo: t, dest_hasta: 0, aviso_en: now + DEMORA, aviso_pend: 1 },
         now,
       ),
     ); // alertas pagas: ya; el resto, a los 10 min
@@ -100,7 +101,7 @@ export default async function pedidos(C) {
     ).results;
     const ps = (
       await q(
-        "SELECT p.id,p.pedido_id,p.mensaje,p.estado,p.creado,u.id tid,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,u.nombre,u.barrio,u.rubros,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,CASE WHEN p.estado='elegida' THEN u.telefono END tel,CASE WHEN p.estado='elegida' THEN u.mail END mail,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM postulaciones pp JOIN pedidos cc ON cc.id=pp.pedido_id WHERE pp.trabajador_id=u.id AND pp.estado='elegida' AND cc.estado='hecha') n FROM postulaciones p JOIN usuarios u ON u.id=p.trabajador_id WHERE p.estado!='descartada' AND p.pedido_id IN (SELECT id FROM pedidos WHERE cliente_id=?)",
+        "SELECT p.id,p.pedido_id,p.mensaje,p.estado,p.creado,u.id tid,(SELECT k FROM perfil_fotos WHERE usuario_id=u.id) fv,u.nombre,u.barrio,u.rubros,u.rubro_otro,(u.dni!='' AND u.direccion!='' AND u.mail!='') ver,u.pionero pio,CASE WHEN p.estado='elegida' THEN u.telefono END tel,CASE WHEN p.estado='elegida' THEN u.mail END mail,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM postulaciones pp JOIN pedidos cc ON cc.id=pp.pedido_id WHERE pp.trabajador_id=u.id AND pp.estado='elegida' AND cc.estado='hecha') n FROM postulaciones p JOIN usuarios u ON u.id=p.trabajador_id WHERE p.estado!='descartada' AND p.pedido_id IN (SELECT id FROM pedidos WHERE cliente_id=?)",
         me.id,
       ).all()
     ).results;
@@ -166,9 +167,10 @@ export default async function pedidos(C) {
       const t = String(b.titulo || '').trim();
       if (t.length < 3 || !RUBROS.includes(b.rubro)) return E('Poné un título y elegí un rubro');
       await q(
-        'UPDATE pedidos SET titulo=?,rubro=?,descripcion=?,barrio=?,presupuesto=? WHERE id=?',
+        'UPDATE pedidos SET titulo=?,rubro=?,rubro_otro=?,descripcion=?,barrio=?,presupuesto=? WHERE id=?',
         t.slice(0, 80),
         b.rubro,
+        rubroOtro(b.rubro, b.rubro_otro),
         String(b.descripcion || '').slice(0, 1000),
         String(b.barrio || '').slice(0, 40),
         String(b.presupuesto || '')

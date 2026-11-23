@@ -8,7 +8,7 @@ export default async function postulaciones(C) {
     return J(
       (
         await q(
-          "SELECT p.id,p.estado,p.mensaje,p.creado,c.elegida_en,c.hecha_en,c.titulo,c.rubro,c.barrio,c.estado cestado,CASE WHEN p.estado='elegida' THEN cu.telefono END tel,CASE WHEN p.estado='elegida' THEN cu.mail END mail,cu.nombre cliente FROM postulaciones p JOIN pedidos c ON c.id=p.pedido_id JOIN usuarios cu ON cu.id=c.cliente_id WHERE p.trabajador_id=? AND COALESCE(p.oculta,0)=0 ORDER BY p.id DESC LIMIT 50",
+          "SELECT p.id,p.estado,p.mensaje,p.creado,c.elegida_en,c.hecha_en,c.titulo,c.rubro,c.rubro_otro,c.barrio,c.estado cestado,CASE WHEN p.estado='elegida' THEN cu.telefono END tel,CASE WHEN p.estado='elegida' THEN cu.mail END mail,cu.nombre cliente FROM postulaciones p JOIN pedidos c ON c.id=p.pedido_id JOIN usuarios cu ON cu.id=c.cliente_id WHERE p.trabajador_id=? AND COALESCE(p.oculta,0)=0 ORDER BY p.id DESC LIMIT 50",
           me.id,
         ).all()
       ).results,

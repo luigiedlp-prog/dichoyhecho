@@ -39,7 +39,7 @@ export default async function admin(C) {
       if (z === 'trabajadores')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.rubro_otro,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -77,7 +77,7 @@ export default async function admin(C) {
           nw = w.includes('?') ? [now] : [];
         return J({
           pedidos: await all(
-            "SELECT c.id,c.titulo,c.rubro,c.barrio,CASE WHEN c.estado='abierta' AND c.vence<? THEN 'vencida' ELSE c.estado END estado,c.creado,c.vence,c.dest_hasta,COALESCE(c.oculta,0) oculta,u.nombre cliente,u.telefono,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') post,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id) props,(SELECT COUNT(*) FROM pedido_fotos WHERE pedido_id=c.id) fotos FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE " +
+            "SELECT c.id,c.titulo,c.rubro,c.rubro_otro,c.barrio,CASE WHEN c.estado='abierta' AND c.vence<? THEN 'vencida' ELSE c.estado END estado,c.creado,c.vence,c.dest_hasta,COALESCE(c.oculta,0) oculta,u.nombre cliente,u.telefono,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') post,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id) props,(SELECT COUNT(*) FROM pedido_fotos WHERE pedido_id=c.id) fotos FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE " +
               w +
               " AND (?='' OR c.titulo LIKE ? OR u.nombre LIKE ? OR u.telefono LIKE ? OR c.barrio LIKE ?) AND (?=0 OR c.id<?) ORDER BY c.id DESC LIMIT 100",
             now,
@@ -96,7 +96,7 @@ export default async function admin(C) {
       if (z === 'destacados')
         return J(
           await all(
-            "SELECT c.id,c.titulo,c.rubro,c.barrio,c.estado,c.vence,c.dest_desde,c.dest_hasta,u.nombre cliente,u.telefono,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') post FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE c.dest_hasta>? ORDER BY c.dest_hasta LIMIT 200",
+            "SELECT c.id,c.titulo,c.rubro,c.rubro_otro,c.barrio,c.estado,c.vence,c.dest_desde,c.dest_hasta,u.nombre cliente,u.telefono,(SELECT COUNT(*) FROM postulaciones WHERE pedido_id=c.id AND estado='activa') post FROM pedidos c JOIN usuarios u ON u.id=c.cliente_id WHERE c.dest_hasta>? ORDER BY c.dest_hasta LIMIT 200",
             now,
           ),
         );

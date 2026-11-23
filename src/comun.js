@@ -241,7 +241,7 @@ export async function borrarCuentaDefinitivo(D, id) {
       D.prepare('DELETE FROM ' + t + ' WHERE pedido_id IN (' + mios + ')').bind(id),
     ),
     D.prepare(
-      "UPDATE pedidos SET titulo='Pedido eliminado',descripcion='',presupuesto='',oculta=1,estado=CASE WHEN estado IN ('abierta','elegida') THEN 'cancelada' ELSE estado END WHERE cliente_id=? AND id IN (" +
+      "UPDATE pedidos SET titulo='Pedido eliminado',descripcion='',presupuesto='',rubro_otro='',oculta=1,estado=CASE WHEN estado IN ('abierta','elegida') THEN 'cancelada' ELSE estado END WHERE cliente_id=? AND id IN (" +
         conRes +
         ')',
     ).bind(id),
@@ -258,7 +258,16 @@ export async function borrarCuentaDefinitivo(D, id) {
     ),
     D.prepare('UPDATE usuarios SET ref_por=0 WHERE ref_por=?').bind(id),
     D.prepare(
-      "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',bio='',dni='',direccion='',mail='',suspendido=1,elim_pedida=0,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
+      "UPDATE usuarios SET nombre='Cuenta eliminada',telefono=?,pin_hash=?,rec_hash=?,barrio='',rubros='[]',rubro_otro='',bio='',dni='',direccion='',mail='',suspendido=1,elim_pedida=0,alertas_hasta=0,ref_cod='',ref_por=0,promos=0,reg_ip='',pregunta='',resp_hash='',pionero=0 WHERE id=?",
     ).bind('eliminada-' + id, await mk(rnd(12)), await mk(rnd(12)), id),
   ]);
 }
+
+// "Otros" con lo que la persona especificó (ej. "Reparación de bicicletas"). Solo se guarda si el rubro es Otros; máx. 40 letras.
+export const rubroOtro = (rubro, texto) =>
+  rubro === 'Otros'
+    ? String(texto || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 40)
+    : '';

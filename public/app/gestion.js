@@ -266,7 +266,7 @@ function gh() {
           .map((x) =>
             gusr(
               x,
-              `<p class="s">${esc(JSON.parse(x.rubros || '[]').join(', ') || 'Sin rubros')}</p><p class="s">${x.prom ? STAR + ' ' + x.prom + ' (' + x.n + ')' : 'Sin puntaje'} · ${x.post} propuestas · alta ${fec(x.creado)}</p>`,
+              `<p class="s">${esc(JSON.parse(x.rubros || '[]').map((k) => rbl(k, x.rubro_otro)).join(', ') || 'Sin rubros')}</p><p class="s">${x.prom ? STAR + ' ' + x.prom + ' (' + x.n + ')' : 'Sin puntaje'} · ${x.post} propuestas · alta ${fec(x.creado)}</p>`,
             ),
           )
           .join('') || '<p class="s">Sin resultados.</p>'
@@ -344,7 +344,7 @@ function gh() {
         r
           .map((c) => {
             const vivo = ['abierta', 'elegida'].includes(c.estado);
-            return `<div class="card"><b>#${c.id} ${esc(c.titulo)}</b><p class="s">${esc(c.rubro)}${c.barrio ? ' · ' + esc(c.barrio) : ''} · <span class="bd ${c.estado === 'abierta' || c.estado === 'elegida' || c.estado === 'hecha' ? 'elegida' : 'cancelada'}">${EST[c.estado] || esc(c.estado)}</span>${c.dest_hasta > now ? ' <span class="bd abierta">Destacado</span>' : ''}${c.oculta ? ' <span class="bd cancelada">Borrado por el cliente</span>' : ''}</p><p class="s">${esc(c.cliente)} · ${esc(c.telefono)}</p><p class="s">${c.props} ${plu(c.props, 'propuesta', 'propuestas')}${c.props !== c.post ? ' (' + c.post + ' activas)' : ''} · ${c.fotos} fotos · ${vivo ? 'vence' : 'venció'} ${fecH(c.vence)}</p><div class="ac">${gb('props', 'Ver propuestas', `data-id="${c.id}"`)}${c.dest_hasta > now ? gb('quitar-destacado', 'Sacar destacado', `data-id="${c.id}"`) : ''}${vivo ? gb('bajar', 'Dar de baja', `data-id="${c.id}"`) : ''}</div></div>`;
+            return `<div class="card"><b>#${c.id} ${esc(c.titulo)}</b><p class="s">${esc(rbl(c.rubro, c.rubro_otro))}${c.barrio ? ' · ' + esc(c.barrio) : ''} · <span class="bd ${c.estado === 'abierta' || c.estado === 'elegida' || c.estado === 'hecha' ? 'elegida' : 'cancelada'}">${EST[c.estado] || esc(c.estado)}</span>${c.dest_hasta > now ? ' <span class="bd abierta">Destacado</span>' : ''}${c.oculta ? ' <span class="bd cancelada">Borrado por el cliente</span>' : ''}</p><p class="s">${esc(c.cliente)} · ${esc(c.telefono)}</p><p class="s">${c.props} ${plu(c.props, 'propuesta', 'propuestas')}${c.props !== c.post ? ' (' + c.post + ' activas)' : ''} · ${c.fotos} fotos · ${vivo ? 'vence' : 'venció'} ${fecH(c.vence)}</p><div class="ac">${gb('props', 'Ver propuestas', `data-id="${c.id}"`)}${c.dest_hasta > now ? gb('quitar-destacado', 'Sacar destacado', `data-id="${c.id}"`) : ''}${vivo ? gb('bajar', 'Dar de baja', `data-id="${c.id}"`) : ''}</div></div>`;
           })
           .join('') || '<p class="s">Sin resultados.</p>'
       );
@@ -375,7 +375,7 @@ function gh() {
         r
           .map(
             (c) =>
-              `<div class="card"><b>#${c.id} ${esc(c.titulo)}</b><p class="s">${esc(c.rubro)}${c.barrio ? ' · ' + esc(c.barrio) : ''} · ${EST[c.estado] || esc(c.estado)}</p><p class="s">${esc(c.cliente)} · ${esc(c.telefono)}</p><p class="s">Destacado desde ${fecH(c.dest_desde)} hasta ${fecH(c.dest_hasta)} · ${c.post} ${plu(c.post, 'postulante', 'postulantes')}</p><div class="ac"><a class="btn wa" href="${wa(c.telefono)}" target="_blank" rel="noopener">WhatsApp</a>${gb('props', 'Ver propuestas', `data-id="${c.id}"`)}${gb('quitar-destacado', 'Sacar destacado', `data-id="${c.id}"`)}</div></div>`,
+              `<div class="card"><b>#${c.id} ${esc(c.titulo)}</b><p class="s">${esc(rbl(c.rubro, c.rubro_otro))}${c.barrio ? ' · ' + esc(c.barrio) : ''} · ${EST[c.estado] || esc(c.estado)}</p><p class="s">${esc(c.cliente)} · ${esc(c.telefono)}</p><p class="s">Destacado desde ${fecH(c.dest_desde)} hasta ${fecH(c.dest_hasta)} · ${c.post} ${plu(c.post, 'postulante', 'postulantes')}</p><div class="ac"><a class="btn wa" href="${wa(c.telefono)}" target="_blank" rel="noopener">WhatsApp</a>${gb('props', 'Ver propuestas', `data-id="${c.id}"`)}${gb('quitar-destacado', 'Sacar destacado', `data-id="${c.id}"`)}</div></div>`,
           )
           .join('') || '<div class="card"><p class="s">No hay pedidos destacados ahora.</p></div>'
       );

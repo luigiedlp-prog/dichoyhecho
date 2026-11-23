@@ -18,6 +18,8 @@ try {
   matchMedia('(prefers-color-scheme:dark)').addEventListener('change', temaAplicar);
 } catch (e) {}
 temaAplicar();
+// "Otros" con lo que la persona especificó: "Otros: reparación de bicis"
+const rbl = (r, o) => (r === 'Otros' && o ? 'Otros: ' + o : r);
 const RUB = REGLAS.RUBROS; // las reglas y listas compartidas viven en reglas.js
 let T = localStorage.getItem('t') || '',
   me = null,

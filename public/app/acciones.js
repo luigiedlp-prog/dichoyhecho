@@ -285,7 +285,7 @@ const A = {
   async pw(d) {
     const w = await api('trabajadores/' + d.id),
       r = JSON.parse(w.rubros || '[]');
-    const h = `<div class="row2">${av(w.id, w.fv, w.nombre, 'av s64')}<div><b>${esc(w.nombre)}</b>${vb(w.ver)}${pb(w.pio)}<p class="s">${esc(r.join(', '))}${w.barrio ? (r.length ? ' · ' : '') + esc(w.barrio) : ''}</p><p>${star(w.prom, w.n)}</p></div></div>${w.bio ? `<p>${esc(w.bio)}</p>` : ''}${w.fotos.length ? `<p class="s"><b>Sus trabajos</b></p><div class="gal">${w.fotos.map((i) => `<div><img src="/api/tfoto/${i}" data-a="zoom" data-u="/api/tfoto/${i}" alt="Foto de un trabajo" loading="lazy"></div>`).join('')}</div>` : ''}<div class="rs">${w.resenas.map((x) => `<div class="in"><span class="y">${STAR.repeat(x.e)}${STAR0.repeat(5 - x.e)}</span> <span class="s">${esc(x.quien)} · ${fec(x.f)}</span><p class="s">${esc(x.t)}</p>${x.c ? `<p>${esc(x.c)}</p>` : ''}${th(x.fo, 'rfoto')}</div>`).join('') || '<p class="s">Todavía no tiene reseñas.</p>'}</div>${d.inv && me.tipo === 'cliente' ? '<button class="btn" id="d_inv">Invitar a un pedido</button> ' : ''}${+d.id !== me.id ? '<button class="btn g" id="d_den">Denunciar</button>' : ''}`;
+    const h = `<div class="row2">${av(w.id, w.fv, w.nombre, 'av s64')}<div><b>${esc(w.nombre)}</b>${vb(w.ver)}${pb(w.pio)}<p class="s">${esc(r.map((k) => rbl(k, w.rubro_otro)).join(', '))}${w.barrio ? (r.length ? ' · ' : '') + esc(w.barrio) : ''}</p><p>${star(w.prom, w.n)}</p></div></div>${w.bio ? `<p>${esc(w.bio)}</p>` : ''}${w.fotos.length ? `<p class="s"><b>Sus trabajos</b></p><div class="gal">${w.fotos.map((i) => `<div><img src="/api/tfoto/${i}" data-a="zoom" data-u="/api/tfoto/${i}" alt="Foto de un trabajo" loading="lazy"></div>`).join('')}</div>` : ''}<div class="rs">${w.resenas.map((x) => `<div class="in"><span class="y">${STAR.repeat(x.e)}${STAR0.repeat(5 - x.e)}</span> <span class="s">${esc(x.quien)} · ${fec(x.f)}</span><p class="s">${esc(x.t)}</p>${x.c ? `<p>${esc(x.c)}</p>` : ''}${th(x.fo, 'rfoto')}</div>`).join('') || '<p class="s">Todavía no tiene reseñas.</p>'}</div>${d.inv && me.tipo === 'cliente' ? '<button class="btn" id="d_inv">Invitar a un pedido</button> ' : ''}${+d.id !== me.id ? '<button class="btn g" id="d_den">Denunciar</button>' : ''}`;
     const v = await dlg({
       t: 'Perfil del trabajador',
       h,
@@ -346,6 +346,7 @@ const A = {
     await api('pedidos', {
       titulo: val('ti'),
       rubro: val('ru'),
+      rubro_otro: val('ru') === 'Otros' ? val('ro') : '',
       descripcion: val('de'),
       barrio: val('bb'),
       presupuesto: val('pr'),
@@ -375,6 +376,10 @@ const A = {
       f: [
         { id: 'ti', lb: '¿Qué necesitás?', val: c.titulo, max: 80 },
         { id: 'ru', lb: 'Rubro', opts: RUB.map((r) => [r, r]), val: c.rubro },
+        {
+          id: 'ro',
+          h: `<div id="d_ro_w"${c.rubro === 'Otros' ? '' : ' hidden'}><label class="lb" for="d_ro">¿Qué tipo de trabajo es?</label><input id="d_ro" maxlength="40" placeholder="Ej: Reparación de bicicletas" value="${esc(c.rubro_otro || '')}"></div>`,
+        },
         { id: 'de', lb: 'Detalles', area: 1, max: 1000, val: c.descripcion },
         { id: 'bb', lb: 'Barrio', opts: [['', 'Sin barrio'], ...bs.map((x) => [x, x])], val: c.barrio },
         {
@@ -392,6 +397,7 @@ const A = {
     await api('pedidos/' + d.id + '/editar', {
       titulo: v.ti,
       rubro: v.ru,
+      rubro_otro: v.ru === 'Otros' ? v.ro : '',
       descripcion: v.de,
       barrio: v.bb,
       presupuesto: v.pr,
@@ -603,6 +609,10 @@ const A = {
             '</div>',
         },
         {
+          id: 'ro',
+          h: `<div id="d_ro_w"${r.includes('Otros') ? '' : ' hidden'}><label class="lb" for="d_ro">En «Otros», ¿qué hacés?</label><input id="d_ro" maxlength="40" placeholder="Ej: Reparación de bicicletas" value="${esc(me.rubro_otro || '')}"></div>`,
+        },
+        {
           id: 'bio',
           lb: 'Sobre vos',
           area: 1,
@@ -629,6 +639,9 @@ const A = {
           m.querySelectorAll('.rb').forEach((c) => {
             c.disabled = !c.checked && n >= 3;
           });
+          const o = m.querySelector('.rb[value="Otros"]'),
+            w = m.querySelector('#d_ro_w');
+          if (o && w) w.hidden = !o.checked;
         };
         m.querySelectorAll('.rb').forEach((c) => (c.onchange = l));
         l();
@@ -641,6 +654,7 @@ const A = {
       barrio: v.bb,
       bio: w ? v.bio : me.bio || '',
       rubros: w ? v.rb : [],
+      rubro_otro: w && v.rb.includes('Otros') ? v.ro : '',
     });
     me = await api('yo');
     toast('Guardado');

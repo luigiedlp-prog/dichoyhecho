@@ -22,6 +22,7 @@
     'Service de electrodomésticos',
     'Techos y zinguería',
     'Informática',
+    'Reparación de celulares',
     'Lavadero y estética vehicular',
     'Clases y cuidados',
     'Publicidad y diseño',

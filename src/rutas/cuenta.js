@@ -12,6 +12,7 @@ import {
   REF_MAX,
   REF_N,
   RUBROS,
+  rubroOtro,
   cod6,
   faltan,
   lim,
@@ -182,10 +183,11 @@ export default async function cuenta(C) {
             .slice(0, 100);
     if (ml && !MAILRE.test(ml)) return E('El mail no es válido');
     await q(
-      'UPDATE usuarios SET nombre=?,barrio=?,rubros=?,bio=?,mail=? WHERE id=?',
+      'UPDATE usuarios SET nombre=?,barrio=?,rubros=?,rubro_otro=?,bio=?,mail=? WHERE id=?',
       nm,
       String(b.barrio || '').slice(0, 40),
       r,
+      JSON.parse(r).includes('Otros') ? rubroOtro('Otros', b.rubro_otro) : '',
       String(b.bio || '').slice(0, 300),
       ml || '',
       me.id,

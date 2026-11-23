@@ -97,7 +97,7 @@ export async function notificar(env, ped, now) {
       ids.map((i) => D.prepare('INSERT OR IGNORE INTO avisados(pedido_id,usuario_id) VALUES(?,?)').bind(ped.id, i)),
     );
     const t =
-      (dest ? 'Pedido destacado' : 'Nuevo pedido') + ' de ' + ped.rubro + ': ' + String(ped.titulo).slice(0, 80);
+      (dest ? 'Pedido destacado' : 'Nuevo pedido') + ' de ' + (ped.rubro === 'Otros' && ped.rubro_otro ? 'Otros (' + ped.rubro_otro + ')' : ped.rubro) + ': ' + String(ped.titulo).slice(0, 80);
     await avisar(
       env,
       ids.map((i) => [i, t]),
