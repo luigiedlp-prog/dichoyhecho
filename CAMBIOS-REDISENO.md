@@ -73,3 +73,21 @@
 - Solo vale para los pedidos que se publiquen desde ahora: los que ya estaban esperando conservan su hora de aviso original.
 - El cron corre cada 5 minutos (`wrangler.toml`), así que el aviso real llega entre los 10 y los 15 minutos.
 - `sw.js` en ct-v96.
+
+## Registro en 3 pasos, rubro, cambio de rol y notificaciones
+
+**Registro** (`portada-registro.js`, `acciones.js`): arranca sin rol elegido. Paso 1 "¿Qué querés hacer?" (dos tarjetas, Continuar deshabilitado hasta tocar una), paso 2 "Tus datos" (con el recordatorio "Te registrás como: X · Cambiar" y, para trabajadores, chips de rubro con "Otros" al final + campo para escribir cuál), paso 3 "Tu seguridad" (el botón final lleva el rol: "Crear cuenta de trabajador" / "Crear cuenta para pedir trabajos"). Barra "Paso X de 3" y Atrás que conserva lo cargado (`REG.datos`).
+
+**Worker**
+- `POST /api/registro` acepta `rubro` y `rubro_otro` (se validan; sin rubro queda en "Otros" como antes, por las apps viejas en caché).
+- `POST /api/rubro`: el trabajador elige/corrige su rubro sin tocar el resto del perfil (reemplaza "Otros").
+- `POST /api/cambiar-rol`: pide PIN; no deja con pedidos abiertos/en curso (cliente→trabajador) ni con propuestas activas/trabajos en curso (trabajador→cliente); máximo 3 cambios por día (solo cuentan los cambios hechos).
+- `POST /api/admin/rol` y `POST /api/admin/rubro` (por teléfono). Las listas de clientes/trabajadores de Gestión traen `tipo`.
+- `GET /api/yo` devuelve `push_n` (suscripciones guardadas). No hay tabla nueva: las suscripciones ya iban a `push_subs` y las claves VAPID ya son secretos del Worker.
+
+**App**
+- Pantalla final del registro con el botón "Activá las notificaciones…" (el permiso se pide recién con el toque). "Ahora no" lo posterga 7 días.
+- Franja `#ntf` arriba de la app, una a la vez: "Elegí tu rubro" (trabajador en "Otros" sin texto; vuelve a los 3 días si se cierra) y "Activá las notificaciones" (no aparece si ya están activadas, bloqueadas o hay una suscripción en la cuenta).
+- Perfil: fila "Cambiar mi rol". Gestión: botones "Pasar a cliente/trabajador" y "Cambiar rubro" en cada cuenta.
+
+**Pruebas**: `node tools/probar-roles.mjs` (Worker + SQLite) y `python3 tools/probar-registro.py` (pantallas, saca capturas en /tmp/shots). El mock de `tools/prueba` ya tiene rubro, rol y `push_n`, y su perfil mínimo coincide con el Worker.

@@ -24,7 +24,7 @@ const RUB = REGLAS.RUBROS; // las reglas y listas compartidas viven en reglas.js
 let T = localStorage.getItem('t') || '',
   me = null,
   tab = '',
-  tipo = 'cliente',
+  tipo = '', // rol que se está eligiendo en el registro: arranca sin nada elegido
   fr = '',
   fb = '',
   LC = [],
@@ -91,6 +91,11 @@ const nv0 = () => {
   $('#nav').innerHTML = '';
   $('#bell').hidden = true;
   $('#fab').hidden = true;
+  const nt = $('#ntf');
+  if (nt) {
+    nt.hidden = true;
+    nt.innerHTML = '';
+  }
 };
 /* v55: en pantallas anchas (900 px o más) las pantallas con lista se arman en 2 paneles: filtros a la izquierda y resultados a la derecha.
    En celu y tablet vertical no se toca nada. Se arma al dibujar la pantalla, así que no cambia ninguna otra función. */

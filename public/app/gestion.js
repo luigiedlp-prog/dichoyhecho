@@ -117,7 +117,7 @@ const gconf = (d) =>
   })[d.g];
 const gb = (a, t, x = '') => `<button class="btn g" data-g="${a}" ${x}>${t}</button>`;
 const gusr = (x, det) =>
-  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${x.donador ? ' <span class="bd dest">Donador</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.elim_pedida ? ' <span class="bd cancelada">Pidió eliminar su cuenta</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('donador', x.donador ? 'Quitar Donador' : 'Marcar Donador', `data-t="${esc(x.telefono)}" data-on="${x.donador ? 0 : 1}"`)}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}${x.elim_pedida && !/^eliminada-/.test(x.telefono) ? gb('elimdef', 'Eliminar por completo', `data-t="${esc(x.telefono)}"`) : ''}</div></div>`;
+  `<div class="in"><b>${esc(x.nombre)}</b>${x.dni && x.direccion && x.mail ? ' <span class="bd elegida">Verificado</span>' : ''}${x.pionero ? ' <span class="bd dest">Pionero</span>' : ''}${x.donador ? ' <span class="bd dest">Donador</span>' : ''}${/^eliminada-/.test(x.telefono) ? ' <span class="bd cancelada">Eliminada por su dueño</span>' : x.elim_pedida ? ' <span class="bd cancelada">Pidió eliminar su cuenta</span>' : x.suspendido ? ' <span class="bd cancelada">Suspendido</span>' : ''}<p class="s">${esc(x.telefono)}${x.barrio ? ' · ' + esc(x.barrio) : ''}</p>${x.dni || x.direccion || x.mail ? `<p class="s">DNI ${esc(x.dni || '—')} · ${esc(x.direccion || 'sin dirección')} · ${esc(x.mail || 'sin mail')}</p>` : ''}<p class="s">${x.pregunta ? 'Pregunta: ' + esc(x.pregunta) : 'Sin pregunta de seguridad'}</p>${x.ref_por_nombre ? `<p class="s">Invitado por ${esc(x.ref_por_nombre)}</p>` : ''}${x.ref_n > 0 || x.promos > 0 ? `<p class="s">Invitó a ${x.ref_n} (cuentan ${x.ref_ok_n}) · potenciaciones sin usar: ${x.promos || 0}</p>` : ''}${x.alertas_hasta > Date.now() ? `<p class="s">Alertas hasta ${fecH(x.alertas_hasta)}</p>` : ''}${det}<div class="ac">${/^eliminada-/.test(x.telefono) ? '' : gb('reset', 'Cambiar PIN', `data-t="${esc(x.telefono)}"`)}${x.ref_n > 0 || x.promos > 0 ? gb('refanul', 'Anular invitados', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('donador', x.donador ? 'Quitar Donador' : 'Marcar Donador', `data-t="${esc(x.telefono)}" data-on="${x.donador ? 0 : 1}"`)}${/^eliminada-/.test(x.telefono) ? '' : gb('rol', x.tipo === 'trabajador' ? 'Pasar a cliente' : 'Pasar a trabajador', `data-t="${esc(x.telefono)}" data-to="${x.tipo === 'trabajador' ? 'cliente' : 'trabajador'}"`)}${x.tipo === 'trabajador' && !/^eliminada-/.test(x.telefono) ? gb('rubro', 'Cambiar rubro', `data-t="${esc(x.telefono)}"`) : ''}${/^eliminada-/.test(x.telefono) ? '' : gb('susp', x.suspendido ? 'Activar' : 'Suspender', `data-t="${esc(x.telefono)}" data-on="${x.suspendido ? 0 : 1}"`)}${x.elim_pedida && !/^eliminada-/.test(x.telefono) ? gb('elimdef', 'Eliminar por completo', `data-t="${esc(x.telefono)}"`) : ''}</div></div>`;
 const gnorm = (s) =>
   String(s ?? '')
     .toLowerCase()
@@ -815,6 +815,42 @@ document.addEventListener('click', (e) => {
       });
       if (!r) return;
       await api('admin/reset-pin', { telefono: d.t, pin: r.p }, k);
+    } else if (d.g === 'rol' || d.g === 'rubro') {
+      // Para quien se equivocó al registrarse: cambiar el rol de la cuenta (cliente <-> trabajador) o el rubro del trabajador
+      const aTra = d.g === 'rubro' || d.to === 'trabajador';
+      const f = aTra
+        ? [
+            { id: 'ru', lb: 'Rubro', opts: [['', 'Elegí el rubro'], ...RUB.map((x) => [x, x])], val: '' },
+            {
+              id: 'ro',
+              h: '<div id="d_ro_w" hidden><label class="lb" for="d_ro">¿A qué se dedica?</label><input id="d_ro" maxlength="40" placeholder="Ej: Reparación de bicicletas"></div>',
+            },
+          ]
+        : [];
+      const r = await dlg({
+        t: d.g === 'rubro' ? 'Cambiar rubro' : aTra ? 'Pasar a trabajador' : 'Pasar a cliente',
+        p:
+          'Cuenta ' +
+          d.t +
+          '. ' +
+          (d.g === 'rubro'
+            ? 'Queda ese solo rubro; la persona puede sumar más desde su perfil.'
+            : aTra
+              ? 'Pasa a poder postularse a pedidos. No puede tener pedidos abiertos o en curso.'
+              : 'Pasa a poder publicar pedidos y se borran sus rubros. No puede tener propuestas activas ni trabajos en curso.'),
+        f,
+        ok: d.g === 'rubro' ? 'Guardar rubro' : aTra ? 'Pasar a trabajador' : 'Pasar a cliente',
+        v: (x) => (aTra && !x.ru ? 'Elegí el rubro.' : aTra && x.ru === 'Otros' && !x.ro ? 'Escribí a qué se dedica.' : ''),
+      });
+      if (!r) return;
+      if (d.g === 'rubro')
+        await api('admin/rubro', { telefono: d.t, rubro: r.ru, rubro_otro: r.ru === 'Otros' ? r.ro : '' }, k);
+      else
+        await api(
+          'admin/rol',
+          { telefono: d.t, tipo: d.to, rubro: r.ru || '', rubro_otro: r.ru === 'Otros' ? r.ro : '' },
+          k,
+        );
     } else if (d.g === 'local-nuevo') {
       const r = await dlg({
         t: 'Nuevo local o emprendimiento',

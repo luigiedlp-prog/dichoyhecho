@@ -1,4 +1,4 @@
-import { DAY, E, J, MIN, PIN, PURGA, REF_MAX, REMP, RLOC, LOC_TIPOS, aj, borrarCuentaDefinitivo, iguales, limpiarBloq, log, mk, rnd } from '../comun.js';
+import { DAY, E, J, MIN, PIN, PURGA, REF_MAX, REMP, RLOC, RUBROS, LOC_TIPOS, aj, borrarCuentaDefinitivo, cambiarRol, iguales, limpiarBloq, log, mk, rnd, rubroOtro } from '../comun.js';
 import { avisar } from '../avisos.js';
 
 export default async function admin(C) {
@@ -39,7 +39,7 @@ export default async function admin(C) {
       if (z === 'trabajadores')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.rubro_otro,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.tipo,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.alertas_hasta,u.barrio,u.rubros,u.rubro_otro,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT ROUND(AVG(estrellas),1) FROM puntuaciones WHERE trabajador_id=u.id) prom,(SELECT COUNT(*) FROM puntuaciones WHERE trabajador_id=u.id) n,(SELECT COUNT(*) FROM postulaciones WHERE trabajador_id=u.id) post FROM usuarios u WHERE u.tipo='trabajador' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -52,7 +52,7 @@ export default async function admin(C) {
       if (z === 'clientes')
         return J(
           await all(
-            "SELECT u.id,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
+            "SELECT u.id,u.tipo,u.nombre,u.telefono,u.pregunta,u.dni,u.direccion,u.mail,u.barrio,u.suspendido,u.elim_pedida,u.creado,u.promos,u.pionero,u.donador,(SELECT nombre FROM usuarios WHERE id=u.ref_por) ref_por_nombre,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id) ref_n,(SELECT COUNT(*) FROM usuarios WHERE ref_por=u.id AND ref_ok=1 AND suspendido=0) ref_ok_n,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id) total,(SELECT COUNT(*) FROM pedidos WHERE cliente_id=u.id AND estado IN ('abierta','elegida')) activas FROM usuarios u WHERE u.tipo='cliente' AND (?='' OR u.nombre LIKE ? OR u.telefono LIKE ? OR u.barrio LIKE ? OR u.mail LIKE ?) AND (?=0 OR u.id<?) ORDER BY u.id DESC LIMIT 100",
             qs,
             lk,
             lk,
@@ -322,7 +322,7 @@ export default async function admin(C) {
       }
       return E('No existe', 404);
     }
-    if ((z === 'suspender' || z === 'donador' || z === 'reset-pin' || z === 'eliminar-cuenta') && /^eliminada-/.test(String(b.telefono || '')))
+    if ((z === 'suspender' || z === 'donador' || z === 'reset-pin' || z === 'eliminar-cuenta' || z === 'rol' || z === 'rubro') && /^eliminada-/.test(String(b.telefono || '')))
       return E('Esa cuenta fue eliminada por su dueño');
     if (z === 'reset-pin') {
       if (!PIN.test(b.pin || '')) return E('El PIN tiene 6 números');
@@ -351,6 +351,26 @@ export default async function admin(C) {
       if (!x.suspendido) return E('Primero suspendé la cuenta');
       await borrarCuentaDefinitivo(D, x.id);
       await log(D, 'admin', 'Cuenta eliminada por completo (#' + x.id + ', ' + x.tipo + ')');
+      return J({ ok: 1 });
+    }
+    // Cambiar el rol de una cuenta (cliente <-> trabajador): para quien se equivocó al registrarse. Mismas reglas que desde el perfil (sin pedidos ni propuestas en curso).
+    if (z === 'rol') {
+      const x = await q('SELECT id,tipo FROM usuarios WHERE telefono=?', tel).first();
+      if (!x) return E('No existe esa cuenta', 404);
+      const er = await cambiarRol(D, x, b.tipo, b.rubro, b.rubro_otro, now);
+      if (er) return E(er);
+      await log(D, 'admin', 'Rol cambiado: ' + tel + ' ' + x.tipo + ' -> ' + b.tipo);
+      return J({ ok: 1 });
+    }
+    // Cambiar el rubro de un trabajador (queda ese solo; la persona puede sumar más desde su perfil)
+    if (z === 'rubro') {
+      const x = await q("SELECT id FROM usuarios WHERE telefono=? AND tipo='trabajador'", tel).first();
+      if (!x) return E('No existe ese trabajador', 404);
+      if (!RUBROS.includes(b.rubro)) return E('Elegí un rubro de la lista');
+      const ro = rubroOtro(b.rubro, b.rubro_otro);
+      if (b.rubro === 'Otros' && !ro) return E('Escribí a qué se dedica');
+      await q('UPDATE usuarios SET rubros=?,rubro_otro=? WHERE id=?', JSON.stringify([b.rubro]), ro, x.id).run();
+      await log(D, 'admin', 'Rubro cambiado: ' + tel + ' -> ' + b.rubro + (ro ? ' (' + ro + ')' : ''));
       return J({ ok: 1 });
     }
     // Insignia Donador: la marca Gestión a mano cuando llega la donación (el link de Mercado Pago no avisa a la app)

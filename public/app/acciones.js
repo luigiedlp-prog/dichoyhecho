@@ -14,13 +14,49 @@ const A = {
   },
   auth: (d) => {
     if (d.m === 'rec') REG.recup = { tl: '', q: '' };
+    if (d.m === 'reg') {
+      tipo = ''; // el registro arranca sin nada elegido, así nadie queda en el rol equivocado por un valor por defecto
+      REG.paso = 1;
+    }
     auth(d.m);
   },
   home: () => home(),
+  // Paso 1: tocar una tarjeta marca el rol y habilita "Continuar" (sin volver a dibujar la pantalla)
   rtipo: (d) => {
-    REG.guardar();
     tipo = d.t;
+    document.querySelectorAll('.rol').forEach((b) => {
+      const on = b.dataset.t === tipo;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+    });
+    const c = $('#rnx');
+    if (c) c.disabled = false;
+  },
+  rnext: () => {
+    REG.guardar();
+    if (!tipo) throw new Error('Elegí una opción para seguir');
+    if (REG.paso === 1) REG.paso = 2;
+    else if (REG.paso === 2) {
+      const e = regErr2();
+      if (e) throw new Error(e);
+      REG.paso = 3;
+    }
     auth('reg');
+    scrollTo(0, 0);
+  },
+  // Atrás conserva lo ya cargado (REG.datos); desde el paso 1 vuelve a la portada
+  rback: () => {
+    REG.guardar();
+    if (REG.paso <= 1) return auth('land');
+    REG.paso--;
+    auth('reg');
+    scrollTo(0, 0);
+  },
+  rcambiar: () => {
+    REG.guardar();
+    REG.paso = 1;
+    auth('reg');
+    scrollTo(0, 0);
   },
   ojo: () => {
     const i = $('#pn'),
@@ -179,18 +215,29 @@ const A = {
   },
   async reg() {
     REG.guardar();
-    if (!okNom(REG.datos.n)) throw new Error('Poné tu nombre y tu apellido, solo con letras');
-    if (!REGLAS.telValido(REG.datos.tl)) throw new Error('Revisá el teléfono: poné el código de área y el número');
+    if (!tipo) {
+      REG.paso = 1;
+      auth('reg');
+      throw new Error('Elegí si querés contratar o trabajar');
+    }
+    {
+      const e = regErr2(); // por si algo del paso 2 quedó mal: se vuelve a ese paso
+      if (e) {
+        REG.paso = 2;
+        auth('reg');
+        throw new Error(e);
+      }
+    }
     {
       const e = REGLAS.errPin(REG.datos.pn);
       if (e) throw new Error(e);
     }
-    if (!okMail(REG.datos.ml.trim())) throw new Error('El mail no es válido');
     if (!REG.datos.pq) throw new Error('Elegí una pregunta de seguridad');
     {
       const e = REGLAS.errRespuesta(REG.datos.pr, REG.datos.pq);
       if (e) throw new Error(e);
     }
+    const w = tipo === 'trabajador';
     const r = await api('registro', {
       tipo,
       nombre: REG.datos.n,
@@ -200,6 +247,8 @@ const A = {
       pregunta: REG.datos.pq,
       respuesta: REG.datos.pr,
       mail: REG.datos.ml.trim(),
+      rubro: w ? REG.datos.rb : '',
+      rubro_otro: w && REG.datos.rb === 'Otros' ? REG.datos.rro.trim() : '',
       acepto: $('#ac').checked,
       origen: localStorage.getItem('o') || '',
       ref: localStorage.getItem('r') || '',
@@ -212,7 +261,111 @@ const A = {
     me = null;
     tab = '';
     await api('yo').then((x) => (me = x));
+    notifPaso(); // pantalla final: pedir las notificaciones con un toque (después sigue la guía de bienvenida)
+  },
+  // Notificaciones (pantalla final del registro y aviso en la app). notifok va directo a A.push, que pide el permiso
+  // como PRIMERA cosa dentro del toque: los navegadores bloquean el permiso si se pide fuera de un gesto.
+  async notifok() {
+    try {
+      await A.push();
+    } catch (e) {
+      toast(e.message);
+    }
     A.start();
+  },
+  notifno() {
+    try {
+      localStorage.setItem('xnt', String(Date.now()));
+    } catch (e) {}
+    A.start();
+  },
+  async notifaviso() {
+    try {
+      await A.push();
+    } catch (e) {
+      toast(e.message);
+    }
+    avisoApp();
+  },
+  // Cerrar un aviso de la franja de arriba: vuelve a aparecer en unos días (xrb: rubro, xnt: notificaciones)
+  ntfx(d) {
+    try {
+      localStorage.setItem(d.k, String(Date.now()));
+    } catch (e) {}
+    avisoApp();
+  },
+  // Aviso para trabajadores que quedaron en "Otros" sin decir qué hacen: elegir el rubro (POST /api/rubro, un UPDATE en D1)
+  async rubroaviso() {
+    const v = await dlg({
+      t: '¿A qué te dedicás?',
+      p: 'Elegí tu rubro principal: así te llegan los avisos de los pedidos que te corresponden. Después podés sumar hasta 2 más desde Mis datos.',
+      f: [
+        { id: 'ru', lb: 'Rubro', opts: [['', 'Elegí tu rubro'], ...RUB.map((x) => [x, x])], val: '' },
+        {
+          id: 'ro',
+          h: '<div id="d_ro_w" hidden><label class="lb" for="d_ro">¿Qué hacés?</label><input id="d_ro" maxlength="40" placeholder="Ej: Reparación de bicicletas"></div>',
+        },
+      ],
+      ok: 'Guardar',
+      v: async (x) => {
+        if (!x.ru) return 'Elegí tu rubro.';
+        if (x.ru === 'Otros' && !x.ro) return 'Contanos a qué te dedicás.';
+        try {
+          await api('rubro', { rubro: x.ru, rubro_otro: x.ru === 'Otros' ? x.ro : '' });
+        } catch (e) {
+          return e.message;
+        }
+        return '';
+      },
+    });
+    if (!v) return;
+    me = await api('yo');
+    toast('Listo, ya figurás en ' + v.ru);
+    avisoApp(); // la franja "Elegí tu rubro" ya no corresponde
+    tab === 'perfil' ? view.perfil() : home();
+  },
+  // Cambiar de rol desde el perfil (para quien se equivocó al registrarse). Pide el PIN y, para pasar a trabajador, el rubro.
+  async rol() {
+    const aTra = me.tipo === 'cliente';
+    const f = [];
+    if (aTra)
+      f.push(
+        { id: 'ru', lb: '¿A qué te dedicás?', opts: [['', 'Elegí tu rubro'], ...RUB.map((x) => [x, x])], val: '' },
+        {
+          id: 'ro',
+          h: '<div id="d_ro_w" hidden><label class="lb" for="d_ro">¿Qué hacés?</label><input id="d_ro" maxlength="40" placeholder="Ej: Reparación de bicicletas"></div>',
+        },
+      );
+    f.push({ id: 'pin', lb: 'Tu PIN, para confirmar', type: 'password', mode: 'numeric', max: 6 });
+    const v = await dlg({
+      t: aTra ? 'Pasar a cuenta de trabajador' : 'Pasar a cuenta de cliente',
+      p: aTra
+        ? 'Vas a poder postularte a pedidos en vez de publicarlos. Para cambiar no tenés que tener pedidos abiertos o en curso.'
+        : 'Vas a poder publicar pedidos en vez de postularte. Para cambiar no tenés que tener propuestas activas ni trabajos en curso, y se borran tus rubros.',
+      f,
+      ok: aTra ? 'Pasar a trabajador' : 'Pasar a cliente',
+      v: async (x) => {
+        if (aTra && !x.ru) return 'Elegí tu rubro.';
+        if (aTra && x.ru === 'Otros' && !x.ro) return 'Contanos a qué te dedicás.';
+        if (!/^\d{6}$/.test(x.pin)) return 'Poné tu PIN de 6 números.';
+        try {
+          await api('cambiar-rol', {
+            tipo: aTra ? 'trabajador' : 'cliente',
+            rubro: x.ru || '',
+            rubro_otro: x.ru === 'Otros' ? x.ro : '',
+            pin: x.pin,
+          });
+        } catch (e) {
+          return e.message;
+        }
+        return '';
+      },
+    });
+    if (!v) return;
+    me = await api('yo');
+    tab = 'perfil';
+    toast(aTra ? 'Ahora tu cuenta es de trabajador' : 'Ahora tu cuenta es de cliente');
+    home();
   },
   async recq() {
     const tl = limpiarTel(val('tl'));
@@ -786,7 +939,9 @@ const A = {
     });
     const k2 = s.toJSON().keys || {};
     await api('push', { endpoint: s.endpoint, p256dh: k2.p256dh, auth: k2.auth });
+    if (me) me.push_n = Math.max(1, me.push_n || 0);
     toast('Avisos activados');
+    avisoApp();
   },
   async borrar() {
     let msg = '';

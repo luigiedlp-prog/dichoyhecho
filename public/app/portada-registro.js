@@ -55,29 +55,66 @@ function zonaNums() {
     })
     .catch(() => {});
 }
-// Estado del registro y de "Olvidé mi PIN", en un solo lugar.
-const VACIO = { n: '', bb: '', tl: '', pn: '', pq: '', pr: '', ml: '', ac: false };
+// Estado del registro (en 3 pasos) y de "Olvidé mi PIN", en un solo lugar.
+// rb = rubro del trabajador, rro = lo que escribió si eligió "Otros".
+const VACIO = { n: '', bb: '', tl: '', pn: '', pq: '', pr: '', ml: '', ac: false, rb: '', rro: '' };
 const REG = {
   datos: { ...VACIO },
+  paso: 1,
   recup: { tl: '', q: '' },
-  // Lee lo que hay escrito en pantalla (el teléfono se limpia solo).
+  // Lee lo que hay escrito en pantalla (el teléfono se limpia solo). Cada paso solo tiene sus campos: los de los otros pasos se conservan.
   guardar() {
-    ['n', 'bb', 'tl', 'pn', 'pq', 'pr', 'ml'].forEach((k) => {
+    ['n', 'bb', 'tl', 'pn', 'pq', 'pr', 'ml', 'rro'].forEach((k) => {
       if ($('#' + k)) this.datos[k] = val(k);
     });
     if ($('#tl')) this.datos.tl = limpiarTel(this.datos.tl);
     if ($('#ac')) this.datos.ac = $('#ac').checked;
+    const r = document.querySelector('input[name="rrb"]:checked');
+    if (r) this.datos.rb = r.value;
   },
   reiniciar() {
     this.datos = { ...VACIO };
+    this.paso = 1;
+    tipo = '';
   },
 };
 const okNom = (n) => !!REGLAS.nombre(n); // nombre y apellido
 const okMail = REGLAS.mailOk;
+// Paso 1: dos tarjetas grandes, cada una con su color e ícono y una frase corta que dice para qué sirve
 const TIPOS = [
-  ['cliente', 'Busco quien me ayude', 'Publicá un pedido y recibí propuestas de trabajadores de tu zona.', X.srch],
-  ['trabajador', 'Quiero ofrecer mis servicios', 'Encontrá pedidos cerca tuyo y mandá tu propuesta.', X.pen],
+  ['cliente', 'Necesito contratar a alguien', 'Publicás un pedido y recibís propuestas', X.srch],
+  ['trabajador', 'Soy trabajador y quiero conseguir pedidos', 'Te postulás a trabajos cerca tuyo', X.pen],
 ];
+const rolCard = (t) =>
+  `<button type="button" class="rol ${t[0]}${tipo === t[0] ? ' on' : ''}" data-a="rtipo" data-t="${t[0]}" aria-pressed="${tipo === t[0]}"><span class="ric">${sv(t[3])}</span><span class="rtx"><b>${t[1]}</b><span>${t[2]}</span></span><span class="rck" aria-hidden="true">${sv(X.chk)}</span></button>`;
+// Barra "Paso X de 3"
+const regBarra = (p) =>
+  `<div class="rpg" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${p}" aria-label="Paso ${p} de 3"><span class="s"><b>Paso ${p} de 3</b></span><div class="pg"><i style="width:${Math.round((p / 3) * 100)}%"></i></div></div>`;
+// Rubro del trabajador: chips tocables (uno solo) y, al final, "Otros" con un campo para escribir cuál
+const rubChips = (v) =>
+  `<div class="chips rrubs" role="radiogroup" aria-label="¿A qué te dedicás?">${RUB.map((x) => `<label><input type="radio" name="rrb" value="${esc(x)}"${v === x ? ' checked' : ''}>${IC[x] || ''} ${esc(x)}</label>`).join('')}</div><div id="rro_w"${v === 'Otros' ? '' : ' hidden'}><label class="lb" for="rro">¿Qué hacés?</label><input id="rro" maxlength="40" autocomplete="off" placeholder="Ej: Reparación de bicicletas" value="${esc(REG.datos.rro)}"></div>`;
+// Al elegir "Otros" aparece el campo para decir cuál
+document.addEventListener('change', (e) => {
+  if (!e.target.matches || !e.target.matches('input[name="rrb"]')) return;
+  REG.datos.rb = e.target.value;
+  const w = $('#rro_w');
+  if (w) {
+    w.hidden = e.target.value !== 'Otros';
+    if (!w.hidden) w.querySelector('input').focus();
+  }
+});
+// Lo que falta en el paso 2 (tus datos), o '' si está bien. Lo usan "Continuar" y el botón final.
+const regErr2 = () => {
+  const D = REG.datos;
+  if (!okNom(D.n)) return 'Poné tu nombre y tu apellido, solo con letras';
+  if (!REGLAS.telValido(D.tl)) return 'Revisá el teléfono: poné el código de área y el número';
+  if (!okMail(D.ml.trim())) return 'El mail no es válido';
+  if (tipo === 'trabajador') {
+    if (!D.rb) return 'Elegí a qué te dedicás';
+    if (D.rb === 'Otros' && !D.rro.trim()) return 'Escribí a qué te dedicás';
+  }
+  return '';
+};
 const limpiarTel = REGLAS.limpiarTel; // el teléfono se acepta como lo escriba la persona
 // PIN con ojito para verlo y ocultarlo (el Worker sigue pidiendo 6 números).
 const OJO = {
@@ -120,12 +157,23 @@ function auth(m) {
     return;
   }
   if (m === 'reg') {
-    const CH = `<label class="chk"><input id="ac" type="checkbox"${REG.datos.ac ? ' checked' : ''}><span>Acepto los <a href="legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="legal.html#privacidad" target="_blank" rel="noopener">privacidad</a>. Dicho y Hecho solo conecta personas: el trato y el pago son entre ustedes. No adelantes plata y andá con cuidado a domicilios que no conocés.</span></label>`;
-    const st = `<h2 class="q">¿Qué querés hacer?</h2><div class="opts">${TIPOS.map((t) => `<button type="button" class="opt${tipo === t[0] ? ' on' : ''}" data-a="rtipo" data-t="${t[0]}" aria-pressed="${tipo === t[0]}"><span class="ic sb">${sv(t[3])}</span><span class="ot"><b>${t[1]}</b><span class="s">${t[2]}</span></span></button>`).join('')}</div><label class="lb" for="n">Tu nombre y apellido</label><input id="n" placeholder="Ej: Ana Pérez" autocomplete="name" value="${esc(REG.datos.n)}"><label class="lb" for="bb">Tu barrio (opcional)</label>${barSel('bb', REG.datos.bb)}<label class="lb" for="tl">Tu teléfono</label><input id="tl" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="Ej: 2477 412345" value="${esc(REG.datos.tl)}"><p class="ay">Con código de área. Lo acomodamos solo.</p><label class="lb" for="pn">Tu PIN</label>${pinF('6 números', REG.datos.pn)}<p class="ay">Lo vas a usar para entrar.</p><label class="lb" for="pq">Por si olvidás tu PIN</label>${pregSel(REG.datos.pq)}<label class="lb" for="pr">Tu respuesta</label><input id="pr" maxlength="60" autocomplete="off" placeholder="Tu respuesta" value="${esc(REG.datos.pr)}"><p class="ay">Mínimo ${REGLAS.RESP_MIN} letras o números. Mayúsculas y tildes no importan.</p><label class="lb" for="ml">Mail (opcional)</label><input id="ml" type="email" inputmode="email" autocomplete="email" maxlength="100" placeholder="tu@mail.com" value="${esc(REG.datos.ml)}"><p class="s">Solo se comparte con quien acordás un trabajo.</p>${localStorage.getItem('r') ? '<p class="s">Te sumás con el link de alguien que te invitó.</p>' : ''}${CH}<button class="btn full" data-a="reg">Crear cuenta</button>`;
+    const p = tipo ? REG.paso : 1,
+      w = tipo === 'trabajador',
+      D = REG.datos;
+    const CH = `<label class="chk"><input id="ac" type="checkbox"${D.ac ? ' checked' : ''}><span>Acepto los <a href="legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="legal.html#privacidad" target="_blank" rel="noopener">privacidad</a>. Dicho y Hecho solo conecta personas: el trato y el pago son entre ustedes. No adelantes plata y andá con cuidado a domicilios que no conocés.</span></label>`;
+    // Recordatorio del rol elegido, arriba de los pasos 2 y 3
+    const rec2 = `<p class="rrec">Te registrás como: <b>${w ? 'Trabajador' : 'Cliente'}</b> · <button type="button" class="lk3" data-a="rcambiar">Cambiar</button></p>`;
+    let st;
+    if (p === 1)
+      st = `<h2 class="q">¿Qué querés hacer?</h2><div class="opts roles">${TIPOS.map(rolCard).join('')}</div><button class="btn full" id="rnx" data-a="rnext"${tipo ? '' : ' disabled'}>Continuar</button>`;
+    else if (p === 2)
+      st = `${rec2}<h2 class="q">Tus datos</h2><label class="lb" for="n">Tu nombre y apellido</label><input id="n" placeholder="Ej: Ana Pérez" autocomplete="name" value="${esc(D.n)}"><label class="lb" for="bb">Tu barrio (opcional)</label>${barSel('bb', D.bb)}<label class="lb" for="tl">Tu teléfono</label><input id="tl" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="Ej: 2477 412345" value="${esc(D.tl)}"><p class="ay">Con código de área. Lo acomodamos solo.</p><label class="lb" for="ml">Mail (opcional)</label><input id="ml" type="email" inputmode="email" autocomplete="email" maxlength="100" placeholder="tu@mail.com" value="${esc(D.ml)}"><p class="s">Solo se comparte con quien acordás un trabajo.</p>${w ? `<h3 class="q2">¿A qué te dedicás?</h3>${rubChips(D.rb)}<p class="ay">Elegí tu rubro principal. Después podés sumar hasta 2 más desde tu perfil.</p>` : ''}<button class="btn full" data-a="rnext">Continuar</button>`;
+    else
+      st = `${rec2}<h2 class="q">Tu seguridad</h2><label class="lb" for="pn">Tu PIN</label>${pinF('6 números', D.pn)}<p class="ay">Lo vas a usar para entrar.</p><label class="lb" for="pq">Por si olvidás tu PIN</label>${pregSel(D.pq)}<label class="lb" for="pr">Tu respuesta</label><input id="pr" maxlength="60" autocomplete="off" placeholder="Tu respuesta" value="${esc(D.pr)}"><p class="ay">Mínimo ${REGLAS.RESP_MIN} letras o números. Mayúsculas y tildes no importan.</p>${localStorage.getItem('r') ? '<p class="s">Te sumás con el link de alguien que te invitó.</p>' : ''}${CH}<button class="btn full" data-a="reg">${w ? 'Crear cuenta de trabajador' : 'Crear cuenta para pedir trabajos'}</button>`;
     set(
-      `<a class="bk" data-a="auth" data-m="land">‹ Volver</a><h1 class="h1">Creá tu cuenta</h1><div class="pzc"></div><div class="card" id="rst">${st}</div><p class="lk"><a data-a="auth" data-m="in">Ya tengo cuenta</a></p>`,
+      `<a class="bk" data-a="rback">‹ ${p === 1 ? 'Volver' : 'Atrás'}</a><h1 class="h1">Creá tu cuenta</h1>${p === 1 ? '<div class="pzc"></div>' : ''}${regBarra(p)}<div class="card" id="rst">${st}</div><p class="lk"><a data-a="auth" data-m="in">Ya tengo cuenta</a></p>`,
     );
-    pionLugares();
+    if (p === 1) pionLugares();
     return;
   }
   const rec = m === 'rec';
@@ -136,6 +184,19 @@ function auth(m) {
       : `<input id="tl" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="Tu teléfono (ej: 2477 412345)" value="${rec ? esc(REG.recup.tl) : ''}">${rec ? '' : pinF('Tu PIN (6 números)')}<button class="btn full" data-a="${rec ? 'recq' : 'login'}">${rec ? 'Continuar' : 'Ingresar'}</button>`
   }</div>
   <p class="lk"><a data-a="auth" data-m="reg">Crear una cuenta</a> · <a data-a="auth" data-m="rec">Olvidé mi PIN</a></p>`);
+}
+// Pantalla final del registro: pedir las notificaciones. El permiso solo se puede pedir con un toque de la persona
+// (si se pide solo al cargar, los navegadores lo bloquean), por eso va en un botón.
+const pushPosible = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const iosSinApp = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone;
+function notifPaso() {
+  const puede = pushPosible() && Notification.permission === 'default';
+  if (!puede && !iosSinApp()) return A.start(); // ya las activó o las bloqueó, o el navegador no las permite
+  nv0();
+  const w = me.tipo === 'trabajador';
+  set(
+    `<div class="gd ntp"><div class="gill sl-f">${ILU.campana}</div><h1 class="h1 ctr gh sl-f">Enterate apenas pase</h1><p class="s ctr gtx sl-f">${w ? 'Te avisamos cuando alguien publica un pedido de tu rubro y cuando un cliente te elige.' : 'Te avisamos cuando un trabajador te manda una propuesta para tu pedido.'}</p>${puede ? '<button class="btn full" data-a="notifok">Activá las notificaciones para enterarte de pedidos y propuestas</button><p class="lk"><a data-a="notifno">Ahora no</a></p>' : `${ios()}<button class="btn full" data-a="notifno">Seguir</button>`}</div>`,
+  );
 }
 // Guía corta después de registrarse (se ve una vez por cuenta; después, en Perfil > Cómo funciona)
 const GUIA = {

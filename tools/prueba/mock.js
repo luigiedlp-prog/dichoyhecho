@@ -1348,8 +1348,15 @@
         .toLowerCase()
         .slice(0, 100);
       if (ml && !MAILRE.test(ml)) return E('El mail no es válido');
-      if (!String(b.barrio || '').trim()) return E('Elegí tu barrio');
       if (!REGLAS.telValido(tel)) return E('Teléfono inválido');
+      let rubro = '',
+        rubroEsp = '';
+      if (b.tipo === 'trabajador' && b.rubro) {
+        if (!REGLAS.RUBROS.includes(b.rubro)) return E('Elegí a qué te dedicás');
+        rubro = b.rubro;
+        rubroEsp = rubro === 'Otros' ? String(b.rubro_otro || '').trim().slice(0, 40) : '';
+        if (rubro === 'Otros' && !rubroEsp) return E('Contanos a qué te dedicás');
+      }
       if (!PIN.test(b.pin || '')) return E('El PIN tiene 6 números');
       {
         const vi = S.users.findIndex((u) => u.telefono === tel && u.tel_ok === 0);
@@ -1373,7 +1380,8 @@
         pin: b.pin,
         rec,
         barrio: String(b.barrio || '').slice(0, 40),
-        rubros: '[]',
+        rubros: b.tipo === 'trabajador' ? JSON.stringify([rubro || 'Otros']) : '[]',
+        rubro_otro: b.tipo === 'trabajador' ? rubroEsp : '',
         bio: '',
         suspendido: 0,
         intentos: 0,
@@ -1502,9 +1510,7 @@
     const fl = (u = me) => {
       const f = [];
       if (!NOM(u.nombre)) f.push('nombre');
-      if (!S.pf[u.id]) f.push('foto');
-      if (!String(me.barrio || '').trim()) f.push('barrio');
-      if (tra && !JSON.parse(me.rubros || '[]').length) f.push('rubros');
+      // perfil mínimo: solo el nombre es obligatorio (foto, barrio y rubros son opcionales)
       return f;
     };
     const pedirPerfil = () => {
@@ -1552,6 +1558,26 @@
         ]);
     };
     const primera = (u) => !!S.aj.primera_gratis && !S.act.some((a) => a.usuario_id === u.id && a.estado === 'activa');
+    if (p[0] === 'rubro' && m === 'POST') {
+      if (me.tipo !== 'trabajador') return E('Solo los trabajadores tienen rubro', 403);
+      if (!REGLAS.RUBROS.includes(b.rubro)) return E('Elegí a qué te dedicás');
+      const ro = b.rubro === 'Otros' ? String(b.rubro_otro || '').trim().slice(0, 40) : '';
+      if (b.rubro === 'Otros' && !ro) return E('Contanos a qué te dedicás');
+      let cur = [];
+      try { cur = JSON.parse(me.rubros || '[]'); } catch (e) {}
+      me.rubros = JSON.stringify([...new Set([...cur.filter((x) => x !== 'Otros'), b.rubro])].slice(0, 3));
+      me.rubro_otro = ro;
+      return [200, { ok: 1 }];
+    }
+    if (p[0] === 'cambiar-rol' && m === 'POST') {
+      if (String(b.pin) !== me.pin) return E('Tu PIN no es correcto', 401);
+      if (!['cliente', 'trabajador'].includes(b.tipo) || b.tipo === me.tipo) return E('Esta cuenta ya es de ' + b.tipo);
+      if (b.tipo === 'trabajador' && !REGLAS.RUBROS.includes(b.rubro)) return E('Elegí a qué te dedicás');
+      me.tipo = b.tipo;
+      me.rubros = b.tipo === 'trabajador' ? JSON.stringify([b.rubro]) : '[]';
+      me.rubro_otro = b.tipo === 'trabajador' && b.rubro === 'Otros' ? String(b.rubro_otro || '') : '';
+      return [200, { ok: 1 }];
+    }
     if (p[0] === 'yo') {
       const { pin, rec, resp, ref_por, ref_ok, ...x } = me;
       if (!me.ref_cod) {
@@ -1563,6 +1589,7 @@
         200,
         {
           ...x,
+          push_n: (S.push && S.push[me.id]) || 0,
           ref_cod: me.ref_cod,
           ref_n: S.users.filter((u) => u.ref_por === me.id && u.ref_ok && !u.suspendido).length,
           ref_de: REF_N,

@@ -100,6 +100,41 @@ function nav() {
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${SV.bell}"/></svg>${me.av ? `<i class="dot">${me.av > 9 ? '9+' : me.av}</i>` : ''}`;
   $('#fab').hidden = !(pc && cli && !['ini', 'pub'].includes(tab)); // celu: Publicar vive en el centro del menú. PC: botón flotante, salvo en Inicio (ahí está en la portada)
 }
+// Franja de aviso arriba de la app (una sola a la vez, en #ntf, fuera de #v para no pisar ninguna pantalla):
+// 1) trabajador que quedó en "Otros" sin decir qué hace -> que elija su rubro. 2) quien todavía no activó las notificaciones -> que las active.
+// El primero se puede cerrar y vuelve a los 3 días; el segundo a los 7. Las notificaciones dejan de pedirse solas cuando se activan o se bloquean
+// (Notification.permission deja de ser "default") y si la cuenta ya tiene una suscripción guardada (me.push_n).
+const hace = (k, dias) => {
+  try {
+    return Date.now() - (+localStorage.getItem(k) || 0) < dias * 864e5;
+  } catch (e) {
+    return false;
+  }
+};
+function avisoApp() {
+  let el = $('#ntf');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'ntf';
+    $('#v').before(el);
+  }
+  el.hidden = true;
+  el.innerHTML = '';
+  if (!me || !me.tipo) return;
+  let r = [];
+  try {
+    r = JSON.parse(me.rubros || '[]');
+  } catch (e) {}
+  const sinRubro = me.tipo === 'trabajador' && r.length <= 1 && (!r.length || r[0] === 'Otros') && !me.rubro_otro;
+  let h = '';
+  if (sinRubro && !hace('xrb', 3))
+    h = `<span class="ntf-t"><b>Elegí tu rubro</b><span>Figurás en «Otros». Con tu rubro te llegan los avisos de los pedidos que te corresponden.</span></span><button class="btn" data-a="rubroaviso">Elegir rubro</button><button class="ntf-x" data-a="ntfx" data-k="xrb" aria-label="Cerrar aviso">×</button>`;
+  else if (pushPosible() && Notification.permission === 'default' && !me.push_n && !hace('xnt', 7))
+    h = `<span class="ntf-t"><b>Activá las notificaciones</b><span>${me.tipo === 'trabajador' ? 'Enterate apenas se publica un pedido de tu rubro.' : 'Enterate apenas un trabajador te manda una propuesta.'}</span></span><button class="btn" data-a="notifaviso">Activar</button><button class="ntf-x" data-a="ntfx" data-k="xnt" aria-label="Cerrar aviso">×</button>`;
+  if (!h) return;
+  el.innerHTML = `<div class="ntf-i" role="status">${h}</div>`;
+  el.hidden = false;
+}
 async function home() {
   try {
     me = await api('yo');
@@ -128,6 +163,7 @@ async function home() {
   )
     tab = tabs()[0][0];
   nav();
+  avisoApp();
   if (['feed', 'mp', 'mis', 'nov', 'loc', 'dir', 'ini'].includes(tab)) set(skel());
   go(() => view[tab]());
   if (me.pionero && !me.pionero_visto && !window.__pioVisto) pionAviso();

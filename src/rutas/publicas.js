@@ -12,6 +12,7 @@ import {
   PIONEROS,
   PREG,
   REFRE,
+  RUBROS,
   aj,
   cod6,
   lim,
@@ -21,6 +22,7 @@ import {
   ok,
   regError,
   rnd,
+  rubroOtro,
   sesion,
   sha,
 } from '../comun.js';
@@ -71,6 +73,15 @@ export default async function publicas(C) {
       .slice(0, 100);
     if (ml && !MAILRE.test(ml)) return E('El mail no es válido');
     if (!R.telValido(tel)) return E('Teléfono inválido');
+    // Rubro del trabajador (el registro nuevo lo pide). Si no viene (app vieja en caché), queda en "Otros" como antes.
+    let rubro = '',
+      rubroEsp = '';
+    if (b.tipo === 'trabajador' && b.rubro) {
+      if (!RUBROS.includes(b.rubro)) return E('Elegí a qué te dedicás');
+      rubro = b.rubro;
+      rubroEsp = rubroOtro(rubro, b.rubro_otro);
+      if (rubro === 'Otros' && !rubroEsp) return E('Contanos a qué te dedicás');
+    }
     if (!PIN.test(b.pin || '')) return E('El PIN tiene 6 números');
     const pg = PREG(b.pregunta),
       rs = NR(b.respuesta);
@@ -108,7 +119,7 @@ export default async function publicas(C) {
       ]);
     try {
       r = await q(
-        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado,rubros,pionero) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT CASE WHEN COUNT(*)<? THEN 1 ELSE 0 END FROM usuarios WHERE pionero=1))',
+        'INSERT INTO usuarios(tipo,nombre,telefono,pin_hash,rec_hash,barrio,origen,mail,ref_por,reg_ip,tel_ok,pregunta,resp_hash,creado,rubros,rubro_otro,pionero) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT CASE WHEN COUNT(*)<? THEN 1 ELSE 0 END FROM usuarios WHERE pionero=1))',
         b.tipo,
         NOM(b.nombre),
         tel,
@@ -123,7 +134,8 @@ export default async function publicas(C) {
         pg,
         await mk(rs),
         now,
-        b.tipo === 'trabajador' ? '["Otros"]' : '[]',
+        b.tipo === 'trabajador' ? JSON.stringify([rubro || 'Otros']) : '[]',
+        b.tipo === 'trabajador' ? rubroEsp : '',
         PIONEROS,
       ).run();
     } catch (e) {

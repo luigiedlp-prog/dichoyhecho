@@ -13,6 +13,7 @@ import {
   REF_N,
   RUBROS,
   rubroOtro,
+  cambiarRol,
   cod6,
   faltan,
   lim,
@@ -73,7 +74,8 @@ export default async function cuenta(C) {
   }
   if (p[0] === 'yo') {
     const s = await q(
-      'SELECT ROUND(AVG(estrellas),1) prom,COUNT(*) n,(SELECT k FROM perfil_fotos WHERE usuario_id=?) fv,(SELECT COUNT(*) FROM avisos WHERE usuario_id=? AND leido=0) av FROM puntuaciones WHERE trabajador_id=?',
+      'SELECT ROUND(AVG(estrellas),1) prom,COUNT(*) n,(SELECT k FROM perfil_fotos WHERE usuario_id=?) fv,(SELECT COUNT(*) FROM avisos WHERE usuario_id=? AND leido=0) av,(SELECT COUNT(*) FROM push_subs WHERE usuario_id=?) push_n FROM puntuaciones WHERE trabajador_id=?',
+      me.id,
       me.id,
       me.id,
       me.id,
@@ -167,6 +169,36 @@ export default async function cuenta(C) {
       (await q('SELECT id,texto,creado,leido FROM avisos WHERE usuario_id=? ORDER BY id DESC LIMIT 30', me.id).all())
         .results,
     );
+  }
+  // Cambiar de rol (cliente <-> trabajador) desde el perfil: pide el PIN, y para pasar a trabajador, el rubro.
+  if (p[0] === 'cambiar-rol' && m === 'POST') {
+    if (await lim(D, 'rol:' + me.id, 5, 60 * MIN, now)) return E('Demasiados intentos. Probá en un rato.', 429);
+    if (!(await ok(String(b.pin || ''), me.pin_hash))) return E('Tu PIN no es correcto', 401);
+    // Máximo 3 cambios por día. Se cuenta sin descontar: solo gasta cupo un cambio que se hizo, no un intento con error.
+    const hechos = (
+      await q('SELECT COUNT(*) n FROM limites WHERE clave=? AND creado>?', 'rolc:' + me.id, now - DAY).first()
+    ).n;
+    if (hechos >= 3) return E('Ya cambiaste de rol varias veces hoy. Probá mañana.', 429);
+    const er = await cambiarRol(D, me, b.tipo, b.rubro, b.rubro_otro, now);
+    if (er) return E(er);
+    await q('INSERT INTO limites(clave,creado) VALUES(?,?)', 'rolc:' + me.id, now).run();
+    await log(D, 'cuenta', 'Cambió de rol: ' + me.tipo + ' -> ' + b.tipo + ' (#' + me.id + ')');
+    return J({ ok: 1 });
+  }
+  // Elegir o corregir el rubro sin tocar el resto del perfil (aviso para los trabajadores que quedaron en "Otros").
+  // Reemplaza "Otros" por el rubro nuevo y conserva los demás (hasta MAXR).
+  if (p[0] === 'rubro' && m === 'POST') {
+    if (!tra) return E('Solo los trabajadores tienen rubro', 403);
+    if (!RUBROS.includes(b.rubro)) return E('Elegí a qué te dedicás');
+    const ro = rubroOtro(b.rubro, b.rubro_otro);
+    if (b.rubro === 'Otros' && !ro) return E('Contanos a qué te dedicás');
+    let cur = [];
+    try {
+      cur = JSON.parse(me.rubros || '[]');
+    } catch (e) {}
+    const r = [...new Set([...cur.filter((x) => x !== 'Otros' && RUBROS.includes(x)), b.rubro])].slice(0, MAXR);
+    await q('UPDATE usuarios SET rubros=?,rubro_otro=? WHERE id=?', JSON.stringify(r), ro, me.id).run();
+    return J({ ok: 1 });
   }
   if (p[0] === 'perfil' && m === 'POST') {
     const r0 = [...new Set((Array.isArray(b.rubros) ? b.rubros : []).filter((x) => RUBROS.includes(x)))];

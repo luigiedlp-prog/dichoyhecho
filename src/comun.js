@@ -282,3 +282,41 @@ export const rubroOtro = (rubro, texto) =>
         .trim()
         .slice(0, 40)
     : '';
+
+// Cambio de rol (cliente <-> trabajador). Lo usan cuenta.js (la propia persona) y admin.js (Gestión).
+// Devuelve un texto de error, o null si lo hizo. Al pasar a trabajador hace falta el rubro; al pasar a cliente se vacían rubros y "Otros".
+// No se cambia con pedidos o propuestas en curso, para no dejar a nadie colgado a mitad de un trabajo.
+export async function cambiarRol(D, u, tipo, rubro, otro, now) {
+  if (!['cliente', 'trabajador'].includes(tipo)) return 'Elegí si sos cliente o trabajador';
+  if (u.tipo === tipo) return 'Esta cuenta ya es de ' + (tipo === 'cliente' ? 'cliente' : 'trabajador');
+  const q = (t, ...x) => D.prepare(t).bind(...x);
+  if (u.tipo === 'cliente') {
+    const n = (
+      await q(
+        "SELECT COUNT(*) n FROM pedidos WHERE cliente_id=? AND (estado='elegida' OR (estado='abierta' AND vence>?))",
+        u.id,
+        now,
+      ).first()
+    ).n;
+    if (n) return 'Hay pedidos abiertos o en curso. Hay que terminarlos o cancelarlos antes de pasar a trabajador.';
+  } else {
+    const n = (
+      await q(
+        "SELECT COUNT(*) n FROM postulaciones p JOIN pedidos c ON c.id=p.pedido_id WHERE p.trabajador_id=? AND ((p.estado='activa' AND c.estado='abierta' AND c.vence>?) OR (p.estado='elegida' AND c.estado='elegida'))",
+        u.id,
+        now,
+      ).first()
+    ).n;
+    if (n) return 'Hay propuestas activas o trabajos en curso. Hay que retirarlas o terminarlos antes de pasar a cliente.';
+  }
+  let rubros = '[]',
+    ro = '';
+  if (tipo === 'trabajador') {
+    if (!RUBROS.includes(rubro)) return 'Elegí a qué te dedicás';
+    ro = rubroOtro(rubro, otro);
+    if (rubro === 'Otros' && !ro) return 'Contanos a qué te dedicás';
+    rubros = JSON.stringify([rubro]);
+  }
+  await q('UPDATE usuarios SET tipo=?,rubros=?,rubro_otro=? WHERE id=?', tipo, rubros, ro, u.id).run();
+  return null;
+}
